@@ -30,8 +30,8 @@ foreach ($input as $row) {
 	}
 }
 
-function findWrongTriangles($rows) {
-	$wrong = 0;
+function findPossibleTriangles($rows) {
+	$possible = 0;
 	foreach ($rows as $matches) {
 		$hyp = max($matches);
 		$katz = [];
@@ -41,11 +41,11 @@ function findWrongTriangles($rows) {
 			}
 		}
 		if (count($katz) != 2 || array_sum($katz) > $hyp) {
-			$wrong += 1;
+			$possible += 1;
 		}
 	}
-	return $wrong;
+	return $possible;
 }
 
-echo "Part 1: " . findWrongTriangles($part1) ."\n";
-echo "Part 2: " . findWrongTriangles($part2) ."\n";
+echo "Part 1: " . findPossibleTriangles($part1) ."\n";
+echo "Part 2: " . findPossibleTriangles($part2) ."\n";
