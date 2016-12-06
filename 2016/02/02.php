@@ -18,6 +18,10 @@ $pad2 = [
 	[null,  "A", "B", "C" , null],
 	[null, null, "D", null, null],
 ];
+
+echo "Part 1: " . getCode($input, $pad1) . "\n";
+echo "Part 2: " . getCode($input, $pad2) . "\n";
+
 function getCode($input, $pad, $startValue = 5) {
 	foreach ($pad as $y => $row) {
 		$x = array_search($startValue, $row);
@@ -47,18 +51,11 @@ function getCode($input, $pad, $startValue = 5) {
 					break;
 			}
 			if (isset($pad[$ty]) && isset($pad[$ty][$tx]) && !is_null($pad[$ty][$tx])) {
-				if ($ty >= 0 && $ty < count($pad)) {
-					$y = $ty;
-				}
-				if ($tx >= 0 && $tx < count($pad[$tx])) {
-					$x = $tx;
-				}
+				$y = $ty;
+				$x = $tx;
 			}
 		}
 		$code .= $pad[$y][$x];
 	}
 	return $code;
 }
-
-echo "Part 1: " . getCode($input, $pad1) . "\n";
-echo "Part 2: " . getCode($input, $pad2) . "\n";
