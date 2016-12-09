@@ -1,49 +1,30 @@
 <?php
 
-$test = false;
+$input = preg_replace("/\s/", "", trim(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . "input.txt")));
 
-$file = ($test) ? "../test.txt" : "input.txt";
-$input = preg_replace("/\s/", "", trim(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . $file)));
-$regex = "/\(\d+x\d+\)/";
-$values = [];
-echo "original input length: " . strlen($input) . "\n";
-$input = decompress($input);
-echo "ending input length: " . $input."\n";
+echo "Part 1: " . decompress($input, true) . "\n";
+echo "Part 2: " . decompress($input, false) . "\n";
 
-function decompress($input, $multiply = 1) {
+function decompress($input, $onlyonce = 1) {
 	$parenthesisPos = strpos($input, "(");
 	if ($parenthesisPos === false) { //nothing to decode
-		return strlen($input) * $multiply;
+		return strlen($input);
 	}
-	for ($k = 0; $k < strlen($input); $k++) {
-		$i = $input[$k];
-		$first = $second = "";
-		if ($i == "(") {
-			$x = 1;
-			while(true) {
-				if ($input[$k+$x] == "x") {
-					break;
-				}
-				$first .= $input[$k+$x];
-				$x++;
-			}
-			$x++;
-			while(true) {
-				if ($input[$k+$x] == ")") {
-					break;
-				}
-				$second .= $input[$k+$x];
-				$x++;
-			}
-			$first = (int)$first;
-			$second = (int)$second;
 
-			$charlen = strlen("(".$first."x".$second.")");
-			#echo "NEW: " . "(".$first."x".$second.")"."\n";
-			$insert = substr($input, $k + $charlen, $first);
-			$firstArr = substr($input, 0, $k);
-			$secondArr = substr($input, $k + $charlen + strlen($insert));
-			return strlen($firstArr) + ($second * decompress($insert, $multiply)) + decompress($secondArr, $multiply);
-		}
-	}
+	preg_match("/\((\d+)x(\d+)\)/", $input, $matches);
+	list($all, $first, $second) = $matches;
+
+	$insert = substr($input, $parenthesisPos + strlen($all), $first);
+	$firstStr = substr($input, 0, $parenthesisPos);
+	$secondStr = substr($input, $parenthesisPos + strlen($all) + strlen($insert));
+
+	return
+		strlen($firstStr) +
+		($second * (
+			$onlyonce
+			? strlen($insert)
+			: decompress($insert, $onlyonce)
+		)) +
+		decompress($secondStr, $onlyonce)
+	;
 }
