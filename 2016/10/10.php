@@ -9,12 +9,9 @@ $bots = $outputs = $tryagain = [];
 
 while(count($input) > 0) {
 	foreach ($input as $row) {
-		$regex = "/^(bot|value)\s(\d+)\s(bot|output)\s(\d+)\s(bot|output)\s(\d+)$/";
-		preg_match($regex, $row, $matches);
-		array_shift($matches); # remove first match (which is the whole matched string)
-
-		switch ($matches[0]) {
+		switch (substr($row, 0, 3)) {
 			case "bot":
+				preg_match("/bot (\d+) gives low to (bot|output) (\d+) and high to (bot|output) (\d+)/", $row, $matches);
 				if (!isset($bots[$matches[1]]) || count($bots[$matches[1]]) < 2) {
 					$tryagain[] = $row;
 					break;
@@ -31,8 +28,9 @@ while(count($input) > 0) {
 				}
 				$bots[$matches[1]] = [];
 				break;
-			case "value":
-				append($bots, $matches[3], $matches[1]);
+			case "val":
+				preg_match("/value (\d+) goes to bot (\d+)/", $row, $matches);
+				append($bots, $matches[2], $matches[1]);
 				break;
 			default:
 				echo "WTF\n";
