@@ -14,11 +14,12 @@ class Elevator
 	public function __construct(FloorCollection $availableFloors)
 	{
 		$this->_availableFloors = $availableFloors;
+		$this->_items = new ItemCollection([]);
 	}
 
 	public function load(ItemCollection $items)
 	{
-		if (count($this->_items) + count($items) > 2) {
+		if (count($this->_items->getItems()) + count($items->getItems()) > 2) {
 			throw new Exception("Elevator overloaded! Can not load " . $items);
 		}
 		$this->_items = $items;
@@ -79,7 +80,12 @@ class Elevator
 	{
 		#echo "Unloading " . $this->_items . " at floor " . $this->getFloor()->getId() . "\n";
 		$this->getFloor()->addItems($this->_items);
-		$this->_items = [];
+		$this->_items = new ItemCollection([]);
+	}
+
+	public function getItems()
+	{
+		return $this->_items;
 	}
 
 }

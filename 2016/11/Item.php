@@ -1,8 +1,9 @@
 <?php
 
-class ItemCollection implements Countable
+class ItemCollection implements Countable, Iterator
 {
 	private $_items = [Item::GENERATOR => [], Item::MICROCHIP => []];
+	private $_position = 0;
 
 	public function __construct($items)
 	{
@@ -10,6 +11,33 @@ class ItemCollection implements Countable
 		{
 			$this->_items[$item->getType()][$item->getAtom()] = $item;
 		}
+		$this->analyze();
+	}
+
+
+	public function rewind()
+	{
+		$this->_position = 0;
+	}
+
+	public function current()
+	{
+		return $this->_items[$this->_position];
+	}
+
+	public function key()
+	{
+		return $this->_position;
+	}
+
+	public function next()
+	{
+		++$this->_position;
+	}
+
+	public function valid()
+	{
+		return isset($this->_items[$this->_position]);
 	}
 
 	public function count() {
@@ -36,7 +64,9 @@ class ItemCollection implements Countable
 	{
 		foreach ($this->_items[Item::MICROCHIP] as $chip) {
 			if (count($this->_items[Item::GENERATOR]) > 0 && !isset($this->_items[Item::GENERATOR][$chip->getAtom()])) {
-				throw new Exception("Oh noes, chip " . $chip . " is dead");
+				throw new Exception(
+					"Oh noes, chip " . $chip . " is dead!" .
+					" (Collection: " . implode(" ", $this->_items[Item::GENERATOR]) . " " . implode(" ", $this->_items[Item::MICROCHIP]) . ")");
 			}
 		}
 	}

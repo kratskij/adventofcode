@@ -35,7 +35,7 @@ class Building
 
 	public function getTopFloor()
 	{
-		return $this->_floors->last();
+		return $this->_floors->top();
 	}
 
 	public function getLowestFloorWithItems()
@@ -54,7 +54,40 @@ class Building
 
 	public function __toString()
 	{
-		return $this->_floors->print($this->_elevator->getFloor());
+		$items = [];
+		foreach ($this->_floors as $floor) {
+			foreach ($floor->getItems()->getItems() as $item) {
+				$items[] = $item;
+			}
+		}
+
+		foreach ($this->_elevator->getItems()->getItems() as $item) {
+			$items[] = $item;
+		}
+
+		usort($items, "strcmp");
+		$str = "";
+		$floor = $this->getTopFloor();
+		while ($floor) {
+			#var_dump($floor);
+		#foreach ($this->_floors as $floor) {
+			if ($floor == $this->_elevator->getFloor()) {
+				$str .= "E [" . str_pad((string)$this->_elevator->getItems(), 10) . "]  ";
+			} else {
+				$str .= str_pad("", 16);
+			}
+			$str .= "F" . $floor->getId() . ":";
+			foreach ($items as $item) {
+				if (in_array($item, $floor->getItems()->getItems())) {
+					$str .= " [$item]";
+				} else {
+					$str .= "     ";
+				}
+			}
+			$str .= "\n";
+			$floor = $floor->below();
+		}
+		return $str;
 	}
 
 	public function __clone()
@@ -92,11 +125,17 @@ class BuildingTree
 	{
 		$hash = md5((string)$building);
 		if (isset(self::$_previousStates[$hash])) {
-			echo "already found: $hash\n";
 			return;
 		}
-		echo "generating $hash\n";
+
 		self::$_previousStates[$hash] = true;
+		$str1 = explode("\n", (string)$this->_node);
+		$str2 = explode("\n", (string)$building);
+		$str = "";
+		foreach ($str1 as $k => $r1) {
+			$str .= $r1 ."   ->   " . $str2[$k] . "\n";
+		}
+		#echo "Adding state (depth {$this->_level}): \n$str\n"; sleep(1);
 
 		$this->_children[] = new BuildingTree($building, $this->_level + 1);
 	}
@@ -108,62 +147,90 @@ class BuildingTree
 
 	public function moveItemsToTop()
 	{
-
 		if ($this->_node->getLowestFloorWithItems() == $this->_node->getTopFloor()) {
 			return [$this->_node];
 		}
 
-		#echo $this->_node."\n";
 		$elevator = $this->_node->getElevator();
 		$floor = $this->_node->getElevator()->getFloor();
 		$loadableItems = $floor->getItems()->getItems();
-		#var_dump($loadableItems);
+
 		if ($this->_node->getLowestFloorWithItems() == $floor) {
 			//let's move items up!
 			foreach ($loadableItems as $a) {
 				foreach ($loadableItems as $b) {
 					if ($a != $b) {
-						$copy = clone $this->_node;
-
 						try {
-							$copy->getElevator()->load(new ItemCollection([$a, $b]));
-							$copy->getElevator()->ride(Elevator::UP);
-							$copy->getElevator()->unload();
-							$this->add($copy);
+							$this->moveItems(new ItemCollection([$a, $b]), Elevator::UP);
 						}
 						catch (Exception $e) {
-							#echo "ERROR: " . $e->getMessage() . "\n";
+							echo $e->getMessage()."\n";
 						}
 					}
 				}
+				$this->moveItems(new ItemCollection([$a]), Elevator::UP);
 			}
 		} else {
 			foreach ($loadableItems as $a) {
-				$copy = clone $this->_node;
-				try {
-					$copy->getElevator()->load(new ItemCollection([$a]));
-					$copy->getElevator()->ride(Elevator::DOWN);
-					$copy->getElevator()->unload();
-					$this->add($copy);
-				}
-				catch (Exception $e) {
-					#echo "ERROR: " . $e->getMessage() . "\n";
+				foreach ([Elevator::DOWN, Elevator::UP] as $direction) {
+					$this->moveItems(new ItemCollection([$a]), $direction);
 				}
 			}
 		}
-		echo $this->_node."\n";
 
 		$valid = [];
 		foreach($this->_children as $child) {
 			$v = $child->moveItemsToTop();
 			if ($v !== false) {
-				if (is_array($v)) {
+				if (is_array($v) && !empty($v)) {
 					$valid = array_merge($valid, $v);
 				}
 			}
 		}
 
 		return $valid;
+	}
+
+	public function getLeaves()
+	{
+		if (!$this->_children) {
+			return [$this->_node];
+		}
+
+		$ret = [];
+		foreach ($this->_children as $child) {
+			$ret = array_merge($ret, $child->getLeaves());
+		}
+		return $ret;
+	}
+
+	private function moveItems(ItemCollection $items, $direction)
+	{
+		$copy = clone $this->_node;
+		try {
+			$printer = function($building, $prefix) {
+				$lines = "";
+				foreach (explode("\n", (string)$building) as $line) {
+					$lines .= $prefix . $line . "\n";
+				}
+				echo $lines."\n";
+			};
+			$prefix = "";
+			for ($i = 0; $i < $this->_level - 1; $i++) {
+				$prefix .= "  ";
+			}
+			$printer($copy, $prefix);
+			$copy->getElevator()->load($items);
+			$printer($copy, $prefix . "  ");
+			$copy->getElevator()->ride($direction);
+			$printer($copy, $prefix . "  ");
+			$copy->getElevator()->unload();
+			$printer($copy, $prefix . "  ");
+			$this->add($copy);
+		}
+		catch (Exception $e) {
+			echo "ERROR: " . $e->getMessage() . "\n";
+		}
 	}
 
 	public function __toString()

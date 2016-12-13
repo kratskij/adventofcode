@@ -14,6 +14,10 @@ $building = new Building($floors);
 //let's move items to top
 $tree = new BuildingTree($building);
 $endResults = $tree->moveItemsToTop();
+$leaves = $tree->getLeaves();
+foreach ($leaves as $leaf) {
+	echo $leaf."\n\n";
+}
 var_dump($endResults);
 
 echo "Part 1: " . $building->getElevator()->getSteps() . "\n";

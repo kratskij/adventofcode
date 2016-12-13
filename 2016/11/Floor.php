@@ -97,7 +97,7 @@ class FloorCollection implements Iterator
 		return isset($this->_floors[$this->_position]);
 	}
 
-	public function getFirst()
+	public function bottom()
 	{
 		return $this->_floors[0];
 	}
@@ -111,7 +111,7 @@ class FloorCollection implements Iterator
 		return $ret;
 	}
 
-	public function last()
+	public function top()
 	{
 		return current(array_slice($this->_floors, -1));
 	}
@@ -124,14 +124,14 @@ class FloorCollection implements Iterator
 		return false;
 	}
 
-	public function above()
+	public function above($floor)
 	{
 		return $this->get(array_search($floor, $this->_floors) + 1);
 	}
 
 
-	public function below()
+	public function below($floor)
 	{
-		return $this->get(array_search($floor, $this->_floors) + 1);
+		return $this->get(array_search($floor, $this->_floors) - 1);
 	}
 }
