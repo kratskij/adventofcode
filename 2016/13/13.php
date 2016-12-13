@@ -27,23 +27,9 @@ while (true) {
 	$y++;
 }
 
-#var_dump($grid);
-
-echo
-"             1         2         3         4         5         6         7         8         9         10
-   01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
-";
-foreach ($grid as $y => $row) {
-	echo $y . "  ";
-	foreach ($row as $x => $val) {
-		echo ($val) ? "." : "█";
-	}
-	echo "\n";
-}
-
 $routes = findRoutes($grid, 1, 1);
 
-echo "Part 1: " . findRoutes($grid, 1, 1)[39][31] . "\n";
+echo "Part 1: " . $routes[39][31] . "\n";
 
 $sum = array_map(
 	function($row) {
@@ -71,6 +57,7 @@ function findRoutes($grid, $fromY, $fromX) {
 							if (isset($grid[$y + $i][$x + $j])) {
 								$n = &$grid[$y + $i][$x + $j];
 								if ($n === true || (is_numeric($n) && $n + 1 < $n)) {
+									printGrid($grid, $y + $i, $x + $j);
 									$n = $val + 1;
 								}
 							}
@@ -84,4 +71,47 @@ function findRoutes($grid, $fromY, $fromX) {
 	}
 
 	return $grid;
+}
+
+function printGrid($grid, $nowY = false, $nowX = false)
+{
+	$ret = "   ";
+	foreach ($grid[0] as $i => $col) {
+		$ret .= str_pad($i, 4);
+	}
+	$ret .= "\n";
+
+	foreach ($grid as $y => $row) {
+		$ret .= $y . "  ";
+		foreach ($row as $x => $val) {
+			if ($y == 39 && $x == 31) {
+				$ret .= "\e[45m";
+			} else if ($y == 1 && $x == 1) {
+				$ret .= "\e[41m";
+			} else if ($y == $nowY && $x == $nowX) {
+				$ret .= "\e[42m";
+			}
+			/*
+			$left = $row[$x - 1];
+			$right = $row[$x + 1];
+			$up = $grid[$y - 1][$x];
+			$down = $grid[$y + 1][$x];
+			$dir = "   ";
+			if (is_numeric($left) && $val > $left) { $dir = " → "; }
+			else if (is_numeric($right) && $val > $right) { $dir = " ← "; }
+			else if (is_numeric($up) && $val > $up) { $dir = " ↓ "; }
+			else if (is_numeric($down) && $val > $down) { $dir = " ↑ "; }
+			*/
+
+			$ret .= is_numeric($val) ? str_pad($val, 4) : ( $val === false ? "████" : "    ");
+
+			if (($y == 39 && $x == 31) || ($y == 1 && $x == 1) || ($y == $nowY && $x == $nowX)) {
+				$ret .= "\e[49m";
+			}
+		}
+		$ret .= "\n";
+	}
+	system('clear');
+	echo $ret;
+	usleep(25000);
 }
