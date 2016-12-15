@@ -42,22 +42,30 @@ foreach(range(1,2) as $part) {
 			visualize($part, $discs[$part], $vTime, $prefix . "Part: $part\nTime: $vTime\n", 500000 / ($time - $vTime));
 			$vTime++;
 		}
-		$prefix = visualize($part, $discs[$part], $vTime, $prefix . "Part: $part\nTime: $vTime\n")."\n";
+		for ($i = 1; $i <= count($discs[$part]) + 1; $i++) {
+			visualize($part, $discs[$part], $vTime, $prefix . "Part: $part\nTime: $vTime (+$i)\n", 1000000, $i);
+		}
+		$i--;
+		$prefix = visualize($part, $discs[$part], $vTime, $prefix . "Part: $part\nTime: $vTime (+$i)\n", false, $i)."\n";
 	} else {
 		echo "Part $part: $time\n";
 	}
 }
 
-function visualize($part, $discs, $time, $prefix = "", $delay = false)
+function visualize($part, $discs, $time, $prefix = "", $delay = false, $capsulePos = false)
 {
 	$str = "$prefix\n";
 	foreach ($discs as $disc) {
+		if ($disc["delay"] == 1) {
+			$str .= $capsulePos === false ? "   *\n" : "\n";
+		}
 		$str .= $disc["delay"] . " |";
 		for ($i = 0; $i < $disc["positions"]; $i++) {
-			$str .= (($disc["startPos"] + $time + $disc["delay"]) % $disc["positions"] != $i) ? "█" : " ";
+			$str .= (($disc["startPos"] + $time + $capsulePos) % $disc["positions"] != $i) ? "█" : ($capsulePos !== false && $capsulePos == $disc["delay"] ? "*" : " ");
 		}
 		$str .= "|\n";
 	}
+	$str .= ($capsulePos > count($discs) ? "   *" : "") . "\n";
 	display($str."\n", $delay);
 	return $str;
 }
