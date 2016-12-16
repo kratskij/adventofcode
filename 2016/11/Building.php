@@ -38,6 +38,11 @@ class Building
 		return $this->_floors->top();
 	}
 
+	public function getFloors()
+	{
+		return $this->_floors;
+	}
+
 	public function getLowestFloorWithItems()
 	{
 		foreach ($this->_floors as $floor) {
@@ -50,6 +55,15 @@ class Building
 	public function getElevator()
 	{
 		return $this->_elevator;
+	}
+
+	public function getStructure()
+	{
+		$ret = "";
+		foreach ($this->_floors as $floor) {
+			$ret .= $floor->getId() . ": " . $floor->getItems()->getStructure() .  ", Elevator at " . $this->_elevator->getPosition() . "\n";
+		}
+		return $ret;
 	}
 
 	public function __toString()
@@ -94,13 +108,9 @@ class Building
 	{
 		$newFloors = new FloorCollection();
 		foreach ($this->_floors as $floor) {
-			$items = [];
-			foreach ($floor->getItems()->getItems() as $item) {
-				$items[] = $item;
-			}
-			$newFloors->add($floor->getId(), new ItemCollection($items));
+			$newFloors->add($floor->getId(), new ItemCollection($floor->getItems()->getItems()));
 		}
-		$newElevator = new Elevator($newFloors);
+		$newElevator = new Elevator($newFloors, $this->_elevator->getSteps());
 		$newElevator->setPosition($this->_elevator->getPosition());
 
 		$this->_floors = $newFloors;
@@ -113,12 +123,17 @@ class BuildingTree
 	private $_level;
 	private $_node;
 	private $_children = [];
+	private static $_maxDepth = 0;
 	private static $_previousStates = [];
 
-	public function __construct($building, $level = 1)
+	public function __construct($building, $level = 0)
 	{
 		$this->_node = $building;
 		$this->_level = $level;
+		if ($this->_level > static::$_maxDepth) {
+			static::$_maxDepth = $this->_level;
+			#echo "New level reached: " . $this->_level . "\n";
+		}
 	}
 
 	public function add($building)
@@ -142,10 +157,10 @@ class BuildingTree
 
 	public function node()
 	{
-		return $this->_node();
+		return $this->_node;
 	}
 
-	public function moveItemsToTop()
+	public function moveItems()
 	{
 		if ($this->_node->getLowestFloorWithItems() == $this->_node->getTopFloor()) {
 			return [$this->_node];
@@ -155,56 +170,57 @@ class BuildingTree
 		$floor = $this->_node->getElevator()->getFloor();
 		$loadableItems = $floor->getItems()->getItems();
 
-		if ($this->_node->getLowestFloorWithItems() == $floor) {
-			//let's move items up!
-			foreach ($loadableItems as $a) {
-				foreach ($loadableItems as $b) {
-					if ($a != $b) {
-						try {
-							$this->moveItems(new ItemCollection([$a, $b]), Elevator::UP);
-						}
-						catch (Exception $e) {
-							echo $e->getMessage()."\n";
-						}
-					}
-				}
-				$this->moveItems(new ItemCollection([$a]), Elevator::UP);
-			}
-		} else {
+		//let's move items down!
+		if ($this->_node->getLowestFloorWithItems() != $floor) {
 			foreach ($loadableItems as $a) {
 				foreach ([Elevator::DOWN, Elevator::UP] as $direction) {
-					$this->moveItems(new ItemCollection([$a]), $direction);
+					try {
+						$this->move(new ItemCollection([$a]), $direction);
+					}
+					catch (Exception $e) {
+#						echo $e->getMessage() . "\n";
+					}
 				}
 			}
 		}
 
-		$valid = [];
-		foreach($this->_children as $child) {
-			$v = $child->moveItemsToTop();
-			if ($v !== false) {
-				if (is_array($v) && !empty($v)) {
-					$valid = array_merge($valid, $v);
+		//let's move items up!
+		$usedCombos = [];
+		foreach ($loadableItems as $a) {
+			foreach ($loadableItems as $b) {
+				if ($a != $b) {
+					try {
+						$items = new ItemCollection([$a, $b]);
+						if (in_array((string)$items, $usedCombos)) {
+							continue;
+						}
+						$usedCombos[] = (string)$items;
+						$this->move($items, Elevator::UP);
+					}
+					catch (Exception $e) {
+#						echo $e->getMessage()."\n";
+					}
 				}
 			}
+			try {
+				$this->move(new ItemCollection([$a]), Elevator::UP);
+			}
+			catch (Exception $e) {
+#				echo $e->getMessage();
+			}
 		}
-
-		return $valid;
 	}
 
-	public function getLeaves()
+	public function getChildren()
 	{
-		if (!$this->_children) {
-			return [$this->_node];
-		}
-
-		$ret = [];
-		foreach ($this->_children as $child) {
-			$ret = array_merge($ret, $child->getLeaves());
-		}
-		return $ret;
+		return $this->_children;
 	}
 
-	private function moveItems(ItemCollection $items, $direction)
+	public function isolateBranch() {
+
+	}
+
+	private function move(ItemCollection $items, $direction)
 	{
 		$copy = clone $this->_node;
 		try {
@@ -219,17 +235,17 @@ class BuildingTree
 			for ($i = 0; $i < $this->_level - 1; $i++) {
 				$prefix .= "  ";
 			}
-			$printer($copy, $prefix);
+			#$printer($copy, $prefix);
 			$copy->getElevator()->load($items);
-			$printer($copy, $prefix . "  ");
+			#$printer($copy, $prefix . "  ");
 			$copy->getElevator()->ride($direction);
-			$printer($copy, $prefix . "  ");
+			#$printer($copy, $prefix . "  ");
 			$copy->getElevator()->unload();
-			$printer($copy, $prefix . "  ");
+			#$printer($copy, $prefix . "  ");
 			$this->add($copy);
 		}
 		catch (Exception $e) {
-			echo "ERROR: " . $e->getMessage() . "\n";
+			#echo "ERROR: " . $e->getMessage() . "\n";
 		}
 	}
 

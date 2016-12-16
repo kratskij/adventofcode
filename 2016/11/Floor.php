@@ -97,11 +97,6 @@ class FloorCollection implements Iterator
 		return isset($this->_floors[$this->_position]);
 	}
 
-	public function bottom()
-	{
-		return $this->_floors[0];
-	}
-
 	public function print($elevatorFloor)
 	{
 		$ret = "";
@@ -114,6 +109,11 @@ class FloorCollection implements Iterator
 	public function top()
 	{
 		return current(array_slice($this->_floors, -1));
+	}
+
+	public function bottom()
+	{
+		return current(array_slice($this->_floors, 0, 1));
 	}
 
 	private function get($index)

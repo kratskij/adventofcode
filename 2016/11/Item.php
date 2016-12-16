@@ -71,15 +71,35 @@ class ItemCollection implements Countable, Iterator
 		}
 	}
 
-	public function getPair()
+	public function getStructure()
 	{
-		$key = array_intersect(array_keys($this->_items[Item::GENERATOR]), array_keys($this->_items[Item::MICROCHIP]));
-		if (!$key) {
-			return false;
-		} else {
-			$key = $key[0];
+		return count($this->getPairs()) . "pairs, " .
+			count($this->getSingles(Item::GENERATOR)) . " generators, " .
+			count($this->getSingles(Item::MICROCHIP)) . " microchips";
+	}
+
+	private function getPairs()
+	{
+		$keys = array_intersect(array_keys($this->_items[Item::GENERATOR]), array_keys($this->_items[Item::MICROCHIP]));
+
+		$ret = [];
+		foreach ($keys as $key) {
+			$ret[$key] = new ItemCollection([$this->_items[Item::GENERATOR][$key], $this->_items[Item::MICROCHIP][$key]]);
 		}
-		return new ItemCollection([$this->_items[Item::GENERATOR][$key], $this->_items[Item::MICROCHIP][$key]]);
+
+		return $ret;
+	}
+
+	private function getSingles($type)
+	{
+		$keys = array_diff(array_keys($this->_items[$type]), array_keys($this->_items[($type == Item::GENERATOR) ? Item::MICROCHIP : Item::GENERATOR]));
+
+		$ret = [];
+		foreach ($keys as $key) {
+			$ret[$key] = new ItemCollection([$this->_items[$type][$key]]);
+		}
+
+		return $ret;
 	}
 
 	public function getItems()
@@ -96,6 +116,8 @@ class ItemCollection implements Countable, Iterator
 
 	public function __toString()
 	{
+		sort($this->_items[Item::GENERATOR]);
+		sort($this->_items[Item::MICROCHIP]);
 		$ret = "";
 		foreach ($this->_items[Item::GENERATOR] as $item) {
 			$ret .= "  " . $item;

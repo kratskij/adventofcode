@@ -9,12 +9,13 @@ class Elevator
 	private $_items;
 	private $_position = 0;
 	private $_availableFloors;
-	private $_steps = 0;
+	private $_steps;
 
-	public function __construct(FloorCollection $availableFloors)
+	public function __construct(FloorCollection $availableFloors, $steps = 0)
 	{
 		$this->_availableFloors = $availableFloors;
 		$this->_items = new ItemCollection([]);
+		$this->_steps = $steps;
 	}
 
 	public function load(ItemCollection $items)
