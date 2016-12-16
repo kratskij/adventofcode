@@ -2,8 +2,8 @@
 
 $test = true;
 
-$file = ($test) ? "../test.txt" : "input.txt";
-$input = explode("\n", trim(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . $file)));
+$file = ($test) ? "test.txt" : "nissen.txt";
+$input = explode("\n", file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . $file));
 
 $regex = "//";
 
@@ -20,10 +20,10 @@ foreach ($input as $row) {
 	#while ($prop = array_shift($matches)) {
 	#	$values[] = (int)array_shift($matches);
 	#}
-
+	
 
 	#$id = array_shift($matches);
-
+	
 	#list($one, $two, $three, $foru) = $matches;
 	#var_dump($one, $two, $three, $four);
 }
