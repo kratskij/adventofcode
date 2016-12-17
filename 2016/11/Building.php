@@ -123,17 +123,14 @@ class BuildingTree
 	private $_level;
 	private $_node;
 	private $_children = [];
-	private static $_maxDepth = 0;
+	private $_parent;
 	private static $_previousStates = [];
 
-	public function __construct($building, $level = 0)
+	public function __construct($building, $level = 0, BuildingTree $parent = null)
 	{
 		$this->_node = $building;
 		$this->_level = $level;
-		if ($this->_level > static::$_maxDepth) {
-			static::$_maxDepth = $this->_level;
-			#echo "New level reached: " . $this->_level . "\n";
-		}
+		$this->_parent = $parent;
 	}
 
 	public function add($building)
@@ -152,7 +149,7 @@ class BuildingTree
 		}
 		#echo "Adding state (depth {$this->_level}): \n$str\n"; sleep(1);
 
-		$this->_children[] = new BuildingTree($building, $this->_level + 1);
+		$this->_children[] = new BuildingTree($building, $this->_level + 1, $this);
 	}
 
 	public function node()
@@ -216,8 +213,9 @@ class BuildingTree
 		return $this->_children;
 	}
 
-	public function isolateBranch() {
-
+	public function parent()
+	{
+		return $this->_parent;
 	}
 
 	private function move(ItemCollection $items, $direction)

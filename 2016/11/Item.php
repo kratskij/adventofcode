@@ -140,7 +140,7 @@ abstract class Item
 
 	public function getAtom()
 	{
-		return $this->_atom;
+		return strtoupper(substr($this->_atom, 0, 2));
 	}
 	public function getType()
 	{
@@ -149,7 +149,7 @@ abstract class Item
 
 	public function __toString()
 	{
-		return $this->_atom . $this->_type;;
+		return $this->getAtom() . $this->getType();
 	}
 }
 
