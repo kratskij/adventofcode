@@ -79,23 +79,39 @@ class Building
 			$items[] = $item;
 		}
 
-		usort($items, "strcmp");
+		usort($items, function($a, $b) {
+			return strcmp($a->getAtom() . $a->getType(), $b->getAtom() . $b->getType());
+		});
+
 		$str = "";
 		$floor = $this->getTopFloor();
 		while ($floor) {
-			#var_dump($floor);
-		#foreach ($this->_floors as $floor) {
 			if ($floor == $this->_elevator->getFloor()) {
-				$str .= "E [" . str_pad((string)$this->_elevator->getItems(), 10) . "]  ";
+				// Since we're using bash colors, we must find the length added by color codes
+				$elevatorItems = $this->_elevator->getItems()->getItems();
+				$itemString = implode(" ", array_map(
+					function($i) {
+						return "[$i]";
+					},
+					$elevatorItems
+				));
+
+#				$padLengthExtra = count($this->_elevator->getItems()->getItems()) * 9;
+				$str .= "E [ " . str_pad($itemString, 11, " ", STR_PAD_LEFT) . " ] ";
+
 			} else {
-				$str .= str_pad("", 16);
+				$str .= str_pad("", 18);
 			}
 			$str .= "F" . $floor->getId() . ":";
+
 			foreach ($items as $item) {
+				$itemString = "[" . (string)$item . "]";
 				if (in_array($item, $floor->getItems()->getItems())) {
-					$str .= " [$item]";
+					$str .= ($item->highlighted()) ? " \e[32m$itemString\e[0m" : " $itemString";
+				} else if ($this->_elevator->getFloor() == $floor && in_array($item, $this->_elevator->getItems()->getItems())) {
+					$str .= " \e[32m$itemString\e[0m";
 				} else {
-					$str .= "     ";
+					$str .= str_pad("", 1 + strlen($itemString));
 				}
 			}
 			$str .= "\n";
@@ -141,13 +157,6 @@ class BuildingTree
 		}
 
 		self::$_previousStates[$hash] = true;
-		$str1 = explode("\n", (string)$this->_node);
-		$str2 = explode("\n", (string)$building);
-		$str = "";
-		foreach ($str1 as $k => $r1) {
-			$str .= $r1 ."   ->   " . $str2[$k] . "\n";
-		}
-		#echo "Adding state (depth {$this->_level}): \n$str\n"; sleep(1);
 
 		$this->_children[] = new BuildingTree($building, $this->_level + 1, $this);
 	}
@@ -222,24 +231,9 @@ class BuildingTree
 	{
 		$copy = clone $this->_node;
 		try {
-			$printer = function($building, $prefix) {
-				$lines = "";
-				foreach (explode("\n", (string)$building) as $line) {
-					$lines .= $prefix . $line . "\n";
-				}
-				echo $lines."\n";
-			};
-			$prefix = "";
-			for ($i = 0; $i < $this->_level - 1; $i++) {
-				$prefix .= "  ";
-			}
-			#$printer($copy, $prefix);
 			$copy->getElevator()->load($items);
-			#$printer($copy, $prefix . "  ");
 			$copy->getElevator()->ride($direction);
-			#$printer($copy, $prefix . "  ");
 			$copy->getElevator()->unload();
-			#$printer($copy, $prefix . "  ");
 			$this->add($copy);
 		}
 		catch (Exception $e) {
@@ -247,6 +241,10 @@ class BuildingTree
 		}
 	}
 
+	public function getDepth()
+	{
+		return $this->_level;
+	}
 	public function __toString()
 	{
 		$ret = "";

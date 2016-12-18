@@ -49,6 +49,7 @@ class ItemCollection implements Countable, Iterator
 		foreach ($items->getItems() as $item) {
 			$this->_items[$item->getType()][$item->getAtom()] = $item;
 		}
+
 		$this->analyze();
 	}
 
@@ -111,6 +112,7 @@ class ItemCollection implements Countable, Iterator
 		foreach ($this->_items[Item::MICROCHIP] as $item) {
 			$items[] = $item;
 		}
+		sort($items);
 		return $items;
 	}
 
@@ -126,7 +128,7 @@ class ItemCollection implements Countable, Iterator
 			$ret .= "  " . $item;
 		}
 
-		return $ret;
+		return trim($ret);
 	}
 }
 
@@ -134,22 +136,58 @@ abstract class Item
 {
 	protected $_atom;
 	protected $_type;
+	protected $_highlight = false;
+	protected static $_atomNames = [];
 
 	const MICROCHIP = "M";
 	const GENERATOR = "G";
+
+	protected function init()
+	{
+		$i = 0;
+		while (true) {
+			$i++;
+			foreach (static::$_atomNames as $atomName => $shortName) {
+				if ($atomName != $this->_atom && substr($this->_atom, 0, $i) == substr($atomName, 0, $i)) {
+					static::$_atomNames[$atomName] = strtoupper(substr($atomName, 0, $i + 1));
+					continue 2;
+				}
+			}
+			static::$_atomNames[$this->_atom] = strtoupper(substr($this->_atom, 0, $i));
+			break;
+		}
+	}
 
 	public function getAtom()
 	{
 		return strtoupper(substr($this->_atom, 0, 2));
 	}
+
 	public function getType()
 	{
 		return $this->_type;
 	}
 
+	public function highlight()
+	{
+		$this->_highlight = true;
+	}
+
+	public function lolight()
+	{
+		$this->_highlight = false;
+	}
+
+	public function highlighted()
+	{
+		return $this->_highlight;
+	}
+
 	public function __toString()
 	{
-		return $this->getAtom() . $this->getType();
+		$ret = static::$_atomNames[$this->_atom] . $this->getType();
+
+		return $ret;
 	}
 }
 
@@ -159,6 +197,7 @@ class RTG extends Item
 	{
 		$this->_atom = $atom;
 		$this->_type = self::GENERATOR;
+		$this->init();
 	}
 }
 class MicroChip extends Item
@@ -167,5 +206,6 @@ class MicroChip extends Item
 	{
 		$this->_atom = $atom;
 		$this->_type = self::MICROCHIP;
+		$this->init();
 	}
 }
