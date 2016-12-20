@@ -1,76 +1,58 @@
 <?php
 
-$input = 0;
-$input = 0; //for testing
-
-$test = false;
-
-$file = ($test) ? "test.txt" : "input.txt";
-$input = explode("\n", trim(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . $file)));
-
-#$input = ["5-8", "0-2", "4-7"];
-
+$input = explode("\n", trim(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . "input.txt")));
 $regex = "/(\d+)\-(\d+)/";
-
-$values = [];
-$lowestBlocked = 0;
-$prev = false;
-$allowed = [];
-$prevAllowed = 0;
+$blocked = [];
 
 foreach ($input as $row) {
 	preg_match($regex, $row, $matches);
 	array_shift($matches); # remove first match (which is the whole matched string)
 	$matches = array_map("intval", $matches);
 
-	$allowed[$matches[0]] = $matches[1];
+	$blocked[$matches[0]] = $matches[1];
 }
 
-ksort($allowed);
-while ($ret = mergeAnOverlap($allowed)) {
-	#echo $ret;
-	ksort($allowed);
+while ($ret = mergeAnOverlap($blocked)) {
+	#echo $ret . "\n";
 }
-reset($allowed);
+reset($blocked);
 
-echo "Part 1: " . ($allowed[key($allowed)] + 1) . "\n";
-echo "Part 2: " . countMissing($allowed, pow(2,32)) . "\n";
+echo "Part 1: " . ($blocked[key($blocked)] + 1) . "\n";
+echo "Part 2: " . countAllowed($blocked, pow(2,32)) . "\n";
 
-function mergeAnOverlap(array &$allowed)
+function mergeAnOverlap(array &$blocked)
 {
-	$prevAllowed = $allowed;
-	foreach ($allowed as $min => $max) {
-		foreach ($prevAllowed as $min2 => $max2) {
+	$prev = $blocked;
+	foreach ($blocked as $min => $max) {
+		foreach ($prev as $min2 => $max2) {
 			if ($min2 < $min && $max2 > $max) {
 				//replace that tiny range
-				unset($allowed[$min]);
-				return "Removed $min-$max: (because $min2-$max2)\n";
+				unset($blocked[$min]);
+				return "Removed $min-$max: (because $min2-$max2)";
 			}
 
 			if ($min2 < $min && $max2 >= $min) {
 				//alter downrange
-				unset($allowed[$min]);
-				$allowed[$min2] = max($max, $max2);
-				return "Altered downrange $min-$max -> $min2-" . $allowed[$min2] . "\n";
+				unset($blocked[$min]);
+				$blocked[$min2] = max($max, $max2);
+				return "Altered downrange $min-$max -> $min2-" . $blocked[$min2] . "";
 			}
 			if ($min2 <= $max && $max2 > $max) {
-				$allowed[$min] = $max2;
-				return "Altered upper $min-$max -> $min-$max2\n";
+				$blocked[$min] = $max2;
+				return "Altered upper $min-$max -> $min-$max2";
 			}
 		}
 	}
 	return false;
 }
 
-function countMissing($allowed, $maximum) {
+function countAllowed($blocked, $maximum) {
 	$sumAllowed = 0;
 	$prevMax = -1;
-	foreach ($allowed as $min => $max) {
+	foreach ($blocked as $min => $max) {
 		$sumAllowed += ($min - $prevMax - 1);
 		$prevMax = $max;
 	}
 
 	return $sumAllowed + $maximum - 1 - $max;
 }
-
-#var_dump($value);
