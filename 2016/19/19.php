@@ -1,50 +1,63 @@
 <?php
 
-$test = true;
-
 $input = 3014387;
+$elves = [];
 
-$input = 5;
-
-$left = [];
-$left2 = [];
 for ($i = 1; $i <= $input; $i++) {
-	$left[$i] = $i;
-	$left2[$i] = $i;
+    $elves[$i] = $i;
 }
-$nextDel = false;
 
-while (false && count($left) > 1) {
-	foreach($left as $i => $l) {
-		if ($nextDel) {
-	#		echo "$i\n";
-			$left[$i] = $nextDel = false;
-		} else if ($l !== false) {
-	#		echo "$i taking from ";
-			$nextDel = true;
-		}
-	}
-	$left = array_filter($left);
-	echo "left : " . count($left) . "\n";
+echo "Part 1: " . reduceByNeighbor($elves) . "\n";
+echo "Part 2: " . reduceByOpposite($elves) . "\n";
+
+//Part 1
+function reduceByNeighbor(array $elves)
+{
+    while (count($elves) > 1) {
+        forward($elves);
+        $deleteIndex = (key($elves) === null) ? reset($elves) : key($elves);
+
+        //stand back; things are about to get crazy in here!
+        prev($elves);
+        deleteIndex($elves, $deleteIndex);
+    }
+
+    return reset($elves);
 }
-#echo "Part 1: ";
-#var_Dump($left);
 
-while (count($left2) > 1) {
-	foreach($left2 as $i => $l) {
-		$mid = ceil(count($left2) / 2);
+// Part 2
+function reduceByOpposite(array $real)
+{
+    $opposite = $real;
+    for ($i = 0; $i < floor(count($opposite) / 2); $i++ ) {
+        next($opposite);
+    }
 
-		$key = ($i < $mid) ? $i + $mid - 1 : $i - $mid;
-		echo "$l taking from " . $left2[$key] . "\n";
-		var_dump($i, $l, $key, $mid, $left2[$key]);
-		echo "-----------\n";
-		unset($left2[$key]);# = false;
-		$left2 = array_filter($left2);
+    while (count($real) > 1) {
+        $deleteIndex = (key($opposite) === null) ? reset($opposite) : key($opposite);
 
+        //stand back; things are about to get crazy in here!
+        prev($opposite);
 
-		sort($left2);
-	}
-		#var_dump($left2);
-	echo "left : " . count($left2) . "\n";
+        deleteIndex($real, $deleteIndex);
+        deleteIndex($opposite, $deleteIndex);
+
+        //compensate for reduced array (if input is an even number, skip after odd numbers, and vice versa)
+        if (count($opposite) % 2 == 0) {
+            forward($opposite);
+        }
+    }
+    return reset($real);
 }
-var_dump($left2);
+
+function deleteIndex(&$arr, $idx) {
+    unset($arr[$idx]);
+    forward($arr);
+}
+
+function forward(&$arr) {
+    $i = next($arr);
+    if ($i === false) {
+        $i = reset($arr);
+    }
+}
