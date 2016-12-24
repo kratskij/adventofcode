@@ -7,151 +7,85 @@ $input = explode("\n", trim(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . $f
 
 $regex = '/\w+\-x(\d+)\-y(\d+)\s+(\d+)T\s+(\d+)T\s+(\d+)T\s+(\d+)%/';
 
-$nodes = [];
+$grid = new Grid();
 
-$keyPositions = [];
-
+$maxX = 0;
 foreach ($input as $row) {
 	preg_match($regex, $row, $matches);
 	array_shift($matches); # remove first match (which is the whole matched string)
-	$matches = array_map("intval", $matches);
-	list($x, $y, $size, $used, $avail, $usePct) = $matches;
-	$nodes[$y][$x] = new Node($x, $y, $size, $used, $avail, $usePct);
-	if ($used == 0) {
-		$keyPositions["emptyAtStart"] = [$x, $y];
-	}
+	list($x, $y, $size, $used, $avail, $usePct) = array_map("intval", $matches);
+	$grid->add($x, $y, $size, $used);
+	$maxX = max($x, $maxX);
 }
-$nodes[0][max(array_keys($nodes[0]))]->setAsGoalNode();
 
-$keyPositions["goalDataAtStart"] = [0, max(array_keys($nodes[0]))];
-$keyPositions["end"] = [0,0];
+$grid->setGoalNode($maxX, 0);
 
-$depths = [
-	"0" => [$nodes]
-];
+$prevDepth = -1;
 
-$depth = $i = 0;
+$shortestPositions = [];  //a grid of best grids
 
-$previousStates = [];
+const SEARCH_FOR_GOAL_DATA = 0;
+const MOVE_DATA_TO_ORIGO = 1;
+$status = SEARCH_FOR_GOAL_DATA;
 
-const SEARCH_FOR_GOAL = 0;
-const MOVE_GOAL_TO_END = 1;
+$gridQueue = [$grid];
+while ($grid = array_shift($gridQueue)) {
+	if (
+		$grid->getDepth() != $prevDepth ||
+		($status == MOVE_DATA_TO_ORIGO && $grid->getGoalNodeX() == 0 && $grid->getGoalNodeY() == 0)
+	) {
+		system("clear");
+		echo "\e[42m \e[0m Altered node\n";
+		echo "\e[41m \e[0m Empty node\n";
+		echo "\e[44m \e[0m Contains precious data\n";
+		echo "\ndepth: " . $grid->getDepth() . "\n";
+		echo $grid . "\n";
+		usleep(100000);
+	}
+	$prevDepth = $grid->getDepth();
 
-$searchStatus = SEARCH_FOR_GOAL;
+	if ($status == SEARCH_FOR_GOAL_DATA && $grid->getPreciousNode()->hasMoved()) {
+		// We're finally able to move the data!
+		// Reset queue and start searching for origo!
+		$status = MOVE_DATA_TO_ORIGO;
+		$gridQueue = [];
+		$shortestPositions = [];
+	} else if ($status == MOVE_DATA_TO_ORIGO && $grid->getGoalNodeX() == 0 && $grid->getGoalNodeY() == 0) {
+		echo "\nPart 2: " . $grid->getDepth() . "\n";
+		die();
+	}
 
-while($gridQueue = array_shift($depths)) {
-	usort($gridQueue, function($a, $b) use ($nullStart) {
-		foreach ($a as $y => $row) {
-			foreach ($row as $x => $node) {
-				if ($node->getUsed() == 0) {
-					$aDist = abs($nullStart[0] - $x) + abs($nullStart[1] - $y);
-					break 2;
-				}
-			}
-		}
-		foreach ($b as $y => $row) {
-			foreach ($row as $x => $node) {
-				if ($node->getUsed() == 0) {
-					$bDist = abs($nullStart[0] - $x) + abs($nullStart[1] - $y);
-					break 2;
-				}
-			}
-		}
-		return $bDist - $aDist;
-	});
-	$gridQueue = array_slice($gridQueue, 0, 100);
-
-	while($grid = array_shift($gridQueue)) {
-		if ($i % 100 == 0) {
-			echo "\$i: $i, grid queue count: " . count($gridQueue). ", depth: " . $depth . "\n";
-			printGrid($grid);
-		}
-		foreach ($grid as $y => $row) {
-			foreach ($row as $x => $node) {
-				if (!$node->getUsed()) { //can't move empty data
-
-					//BUT! we can find it's neighbors!
-					foreach (range(-1,1) as $ty) {
-						if (!isset($grid[$y+$ty])) { continue; }
-						foreach (range(-1,1) as $tx) {
-							if ($tx != 0 && $ty != 0) { continue; }
-							if ($tx == 0 && $ty == 0) { continue; }
-							if (!isset($grid[$y+$ty][$x+$tx])) { continue; }
-							$candidates = findAdjacentMatches($grid, $grid[$y+$ty][$x+$tx]);
-							foreach ($candidates as $toNode) {
-								#echo $node . "|" . $toNode."\n";
-								$newGrid = cloneGrid($grid);
-								$newGrid[$y+$ty][$x+$tx]->moveData($newGrid[$toNode->getY()][$toNode->getX()]);
-
-								$hash = md5(json_encode($newGrid));
-								if (isset($previousStates[$hash])) {
-									continue;
-								} else {
-									$previousStates[$hash] = true;
-								}
-
-								$depths[(string)($depth + 1)][] = $newGrid;
-							}
-						}
-					}
+	$newGrids = $grid->getNextLevelGrids();
+	foreach ($newGrids as $ng) {
+		if ($status == SEARCH_FOR_GOAL_DATA) {
+			$shortest = [$ng->getEmptyX(), $ng->getEmptyY()];
+		} else if ($status == MOVE_DATA_TO_ORIGO) {
+			if ($grid->getGoalNodeY() != $ng->getGoalNodeY() || $grid->getGoalNodeX() != $ng->getGoalNodeX()) {
+				// We moved the goal node! Soon it's time to celebrate!
+				$shortest = [$ng->getGoalNodeX(), $ng->getGoalNodeY()];
+			} else {
+				// Aww, we only moved other stuff around. might need that, though!
+				if (abs($ng->getGoalNodeX() - $ng->getEmptyX()) > 1 || abs($ng->getGoalNodeY() - $ng->getEmptyY()) > 1) {
+					// Too far apart!
 					continue;
 				}
-				/*
-				$candidates = findAdjacentMatches($grid, $node);
-				foreach ($candidates as $toNode) {
-					#echo $node . "|" . $toNode."\n";
-					$newGrid = cloneGrid($grid);
-					$newGrid[$y][$x]->moveData($newGrid[$toNode->getY()][$toNode->getX()]);
-
-					$hash = md5(json_encode($newGrid));
-					if (isset($previousStates[$hash])) {
-						continue;
-					} else {
-						$previousStates[$hash] = true;
-					}
-
-					$depths[(string)($depth + 1)][] = $newGrid;
-				}*/
+				$shortest = [$ng->getGoalNodeX() . "_" . $ng->getEmptyX(), $ng->getGoalNodeY() . "_" . $ng->getEmptyY()];
 			}
-		}
-		if ($depth == 0) {
-			echo "Part 1: " . count($gridQueue) . "\n";
-		}
-		$i++;
-	}
-	$depth++;
-}
 
-function cloneGrid(&$old)
-{
-	$new = [];
-	foreach ($old as $y => $row) {
-		foreach ($row as $x => $node) {
-			$new[$y][$x] = clone $node;
 		}
-	}
-	return $new;
-}
-
-function findAdjacentMatches(&$grid, $node)
-{
-	$candidates = [];
-	foreach (range(-1,1) as $y) {
-		if (!isset($grid[$y + $node->getY()])) {
+		if (
+			isset($shortestPositions[$shortest[1]][$shortest[0]]) &&
+			$shortestPositions[$shortest[1]][$shortest[0]]->getDepth() <= $ng->getDepth()
+		) {
+			// we've already found this path using fewer steps. Kill this path
 			continue;
 		}
-		foreach (range(-1,1) as $x) {
-			if ($x != 0 && $y != 0) { continue; }
-			if ($x == 0 && $y == 0) { continue; }
-			if (!isset($grid[$y + $node->getY()][$x + $node->getX()])) { continue; }
-			$toNode = $grid[$y + $node->getY()][$x + $node->getX()];
-			if ($node->getUsed() <= $toNode->getAvail()) {
-				$candidates[] = $toNode;
-			}
-		}
+		#echo "adding to queue!";
+		$shortestPositions[$shortest[1]][$shortest[0]] = $ng;
+		$gridQueue[] = $ng;
 	}
-	return $candidates;
 }
+
 
 function findMatches(&$nodes, $node)
 {
@@ -171,85 +105,159 @@ function findMatches(&$nodes, $node)
 	return $candidates;
 }
 
-function printGrid($grid) {
-	foreach ($grid as $y => $row) {
-		echo str_pad($y, 2) . ": ";
-		foreach ($row as $x => $node) {
-			echo $node . " ";
+class Grid
+{
+	private $_nodes = [];
+	private $_depth = 0;
+
+	private $_emptyPos = [];
+	private $_preciousPos = [];
+
+	public function add($x, $y, $size, $used)
+	{
+		if (!isset($this->_nodes[$y])) {
+			$this->_nodes[$y] = [];
 		}
-		echo "\n";
+		$node = new Node($size, $used);
+		$this->_nodes[$y][$x] = $node;
+		if ($node->getUsed() == 0) {
+			$this->_emptyPos = [$x, $y];
+		}
+	}
+
+	public function setGoalNode($x, $y)
+	{
+		$this->_nodes[$y][$x]->hasPreciousData(true);
+		$this->_preciousPos = [$x, $y];
+	}
+
+	public function moveData($fromX, $fromY, $toX, $toY)
+	{
+		$fromNode = $this->_nodes[$fromY][$fromX];
+		$toNode = $this->_nodes[$toY][$toX];
+
+		$toNode->fill($fromNode->getUsed());
+		$fromNode->setUsed(0);
+		$this->_emptyPos = [$fromX, $fromY];
+		if ($fromNode->hasPreciousData()) {
+			$fromNode->hasPreciousData(false);
+			$toNode->hasPreciousData(true);
+			$this->_preciousPos = [$toX, $toY];
+		}
+	}
+
+	public function getPreciousNode()
+	{
+		return $this->_nodes[$this->_preciousPos[1]][$this->_preciousPos[0]];
+	}
+
+	public function getGoalNodeX()
+	{
+		return $this->_preciousPos[0];
+	}
+
+	public function getGoalNodeY()
+	{
+		return $this->_preciousPos[1];
+	}
+
+	public function getNextLevelGrids()
+	{
+		$nextLevel = [];
+		list($x, $y) = $this->_emptyPos;
+		foreach (range(-1,1) as $ty) {
+			foreach (range(-1,1) as $tx) {
+				if (
+					abs($tx) + abs($ty) != 1 ||
+					!isset($this->_nodes[$y + $ty]) ||
+					!isset($this->_nodes[$y + $ty][$x + $tx])
+				) {
+					continue;
+				}
+				$newGrid = clone $this;
+				try {
+					$newGrid->moveData($x + $tx, $y + $ty, $x, $y);
+				} catch (Exception $e) {
+					continue;
+				}
+				$nextLevel[] = $newGrid;
+			}
+		}
+		return $nextLevel;
+	}
+
+	public function getEmptyX()
+	{
+		return $this->_emptyPos[0];
+	}
+
+	public function getEmptyY()
+	{
+		return $this->_emptyPos[1];
+	}
+
+	public function getDepth()
+	{
+		return $this->_depth;
+	}
+
+	public function __toString()
+	{
+		$ret = "";
+		foreach ($this->_nodes as $y => $row) {
+			$ret .= str_pad($y, 2) . ": ";
+			foreach ($row as $x => $node) {
+				$ret .= $node;
+			}
+			$ret .= "\n";
+		}
+		return $ret;
+	}
+
+	public function __clone()
+	{
+		$this->_depth++;
+		foreach ($this->_nodes as $y => $row) {
+			foreach ($row as $x => $node) {
+				$this->_nodes[$y][$x] = clone $node;
+			}
+		}
 	}
 }
 
-
-
 class Node
 {
-	private $_x;
-	private $_y;
 	private $_size;
 	private $_used;
-	private $_avail;
-	private $_usePct;
 	private $_goal = false;
+	private $_moved = false;
 
-	public function __construct($x, $y, $size, $used, $avail, $usePct)
+	public function __construct($size, $used)
 	{
-		$this->_x = $x;
-		$this->_y = $y;
 		$this->_size = $size;
 		$this->_used = $used;
-		$this->_avail = $avail;
-		$this->_usePct = $usePct;
-		$this->_moved = false;
 	}
 
 	public function fill($tb)
 	{
-		if ($this->_avail < $tb) {
-			throw new Exception("Can not insert $tb TB into " . $this->_x . "," . $this->_y . " (" . $this->_avail . " TB available)");
+		if ($this->getAvail() < $tb) {
+			throw new Exception("Can not insert $tb TB (" . $this->getAvail() . " TB available)");
 		}
 		$this->_used += $tb;
-		$this->_avail -= $tb;
 		$this->_moved = true;
 	}
 
-	public function moveData(Node $toNode)
+	public function hasPreciousData($setTo = null)
 	{
-		$toNode->fill($this->_used);
-		$this->_used = 0;
-		$this->_avail = $this->_size;
-		if ($this->isGoalNode()) {
-			$this->_goal = false;
-			$toNode->setAsGoalNode();
+		if (is_null($setTo)) {
+			return $this->_goal;
 		}
-		$this->_moved = true;
-
+		$this->_goal = $setTo;
 	}
 
-	public function setAsGoalNode()
+	public function hasMoved()
 	{
-		$this->_goal = true;
-	}
-
-	public function isGoalNode()
-	{
-		return $this->_goal;
-	}
-
-	public function getX()
-	{
-		return $this->_x;
-	}
-
-	public function getY()
-	{
-		return $this->_y;
-	}
-
-	public function getSize()
-	{
-		return $this->_size;
+		return $this->_moved;
 	}
 
 	public function getUsed()
@@ -257,29 +265,31 @@ class Node
 		return $this->_used;
 	}
 
-	public function getAvail()
+	public function setUsed($used)
 	{
-		return $this->_avail;
+		$this->_used = $used;
 	}
 
-	public function getUsePct()
+	public function getAvail()
 	{
-		return $this->_usePct;
+		return $this->_size - $this->_used;
 	}
 
 	public function __toString()
 	{
 		$ret = "";
 		if ($this->_moved) {
-			$ret .= "\e[32m";
+			$ret .= "\e[42m";
 		}
 		if ($this->_used == 0) {
-			$ret .= "\e[31m";
+			$ret .= "\e[41m";
 		}
 		if ($this->_goal) {
-			$ret .= "\e[34m";
+			$ret .= "\e[44m";
 		}
-		$ret .= str_pad($this->_used, 3, " ", STR_PAD_LEFT) . "/" . str_pad($this->_avail, 2, " ", STR_PAD_LEFT);
+		$ret .= #str_pad($this->_used, 3, " ", STR_PAD_LEFT) . "/" .
+			str_pad($this->getAvail(), 2, " ", STR_PAD_LEFT);
+		$ret .= " ";
 		if ($this->_goal || $this->_used == 0 || $this->_moved) {
 			$ret .= "\e[0m";
 		}
