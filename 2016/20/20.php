@@ -37,7 +37,7 @@ function mergeAnOverlap(array &$blocked)
 				$blocked[$min2] = max($max, $max2);
 				return "Altered downrange $min-$max -> $min2-" . $blocked[$min2] . "";
 			}
-			if ($min2 <= $max && $max2 > $max) {
+			if ($min2 <= $max + 1 && $max2 > $max) {
 				$blocked[$min] = $max2;
 				return "Altered upper $min-$max -> $min-$max2";
 			}
