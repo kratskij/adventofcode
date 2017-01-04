@@ -11,7 +11,7 @@ foreach ($input as $row) {
 
 	$blocked[$matches[0]] = $matches[1];
 }
-
+ksort($blocked);
 while ($ret = mergeAnOverlap($blocked)) {
 	#echo $ret . "\n";
 }
