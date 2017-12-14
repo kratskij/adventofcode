@@ -1,9 +1,44 @@
 <?php
 
-$byteSequence = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . "input");
+ini_set('memory_limit','2048M');
 
-echo "Part 1: " . array_product(array_slice(solve(explode(",", $byteSequence), 256), 0, 2)) . "\n";
-echo "Part 2: " . getHash($byteSequence) . "\n";
+$test = isset($argv[1]) && $argv[1] == "test";
+$input = ($test) ? "flqrgnkx" : "ugkiagan";
+
+$values = range(0, 127);
+foreach ($values as $k => $row) {
+    $hash = getHash($input."-".$k);
+    $str = "";
+    foreach (str_split($hash) as $c) {
+        $str .= str_pad(decbin(hexdec($c)), 4, "0", STR_PAD_LEFT);
+    }
+    $values[$k] = str_split($str);
+}
+
+echo "Part 1: " . array_sum(array_map(function($v) { return count(array_filter($v)); }, $values)) . "\n";
+
+$group = 0;
+foreach ($values as $v => &$rowe) {
+    foreach ($rowe as $c => &$colz) {
+        if ($colz === "1") {
+            $group++;
+            $values[$v][$c] = $group;
+            setNeighbours($values, $v, $c);
+        }
+    }
+}
+
+echo "Part 2: $group\n";
+
+function setNeighbours(&$values, $row, $col) {
+    foreach ([[$row+1,$col], [$row-1,$col], [$row,$col+1], [$row,$col-1]] as $i) {
+        list($r,$c) = $i;
+        if (isset($values[$r][$c]) && $values[$r][$c] === "1") {
+            $values[$r][$c] = $values[$row][$col];
+            setNeighbours($values, $r,$c);
+        }
+    }
+}
 
 function getHash($byteSequence) {
 	$values = array_map("ord", str_split($byteSequence));
