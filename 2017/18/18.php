@@ -38,6 +38,8 @@ function send($value, &$from, &$to) {
 
 $program =& $programs[0];
 $otherProgram =& $programs[1];
+$lastSound = false;
+$part1done = false;
 while (true) {
     if (!isset($input[$program["i"]])) {
         $program["dead"] = true;
@@ -56,7 +58,7 @@ while (true) {
     $cmd = $x[0];
     switch($x[0]) {
         case "snd":
-            #$lastSound = h($reg, $x[1]);
+            $lastSound = getValue($program, $x[1]);
             send(getValue($program, $x[1]), $program, $otherProgram);
             break;
         case "set":
@@ -72,6 +74,10 @@ while (true) {
             setReg($program, $x[1], getValue($program, $x[1]) % getValue($program, $x[2]));
             break;
         case "rcv":
+            if (!$part1done && $lastSound && getValue($program, $x[1]) > 0) {
+                echo "Part 1: $lastSound\n";
+                $part1done = true;
+            }
             if (count($program["queue"]) == 0) {
                 //wait
                 $program["waiting"] = true;
@@ -79,18 +85,8 @@ while (true) {
 
             } else {
                 $recv = array_shift($program["queue"]);
-                if (!$recv) {
-                    "HÆ";
-                }
                 setReg($program, $x[1], $recv);
             }
-            /*
-                e($k, "rcv " . getValue($reg, $x[1]) . ": ");
-                $rec = $lastSound;
-                echo "LAASTSOUND " . $rec."\n";
-                break 2;
-            }
-            */
             break;
 
         case "jgz":
@@ -105,7 +101,7 @@ while (true) {
     }
     $program["i"]++;
 }
-var_Dump($sum);
+
 function swap(&$a, &$b)
 {
     $help = &$a;
