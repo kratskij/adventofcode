@@ -13,7 +13,6 @@ foreach (range(0, 5) as $y) {
 }
 $c = 0;
 foreach ($input as $row) {
-	echo $row."\n";
 	if (substr($row, 0, 4) == "rect") {
 		preg_match("/rect (\d+)x(\d+)/", $row, $matches);
 		array_shift($matches); # remove first match (which is the whole matched string)
@@ -46,10 +45,12 @@ foreach ($input as $row) {
 	} else {
 		echo "ERROR: " . $row;
 	}
-	display($display);
-	echo "\n";
+	#display($display);
+	#echo "\n";
 }
-echo "realcount: " . $c."\n";
+echo "Part 1: " . $c."\n";
+echo "Part 2:\n";
+display($display);
 
 function display($d) {
 	$count = 0;
@@ -58,15 +59,13 @@ function display($d) {
 			array_map(
 				function($v) {
 					if ($v) {
-						return '#';
+						return '█';
 					}
-					return ".";
+					return " ";
 				},
 				$row
 			)
 		) . "\n";
 		$count += count(array_filter($row));
 	}
-
-	echo "Count: " . $count;
 }

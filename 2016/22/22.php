@@ -1,6 +1,7 @@
 <?php
 
 $test = false;
+$animate = false;
 
 $file = ($test) ? "../test.txt" : "input";
 $input = explode("\n", trim(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . $file)));
@@ -18,6 +19,26 @@ foreach ($input as $row) {
 	$maxX = max($x, $maxX);
 }
 
+$count = 0;
+foreach ($grid->getNodes() as $y1 => $row1) {
+	foreach ($row1 as $x1 => $n1) {
+		foreach ($grid->getNodes() as $y2 => $row2) {
+			foreach ($row2 as $x2 => $n2) {
+				if ($n1->getUsed() == 0) {
+					continue;
+				}
+				if ($x1 == $x2 && $y1 == $y2) {
+					continue;
+				}
+				if ($n1->getUsed() <= $n2->getAvail()) {
+					$count++;
+				}
+			}
+		}
+	}
+}
+
+echo "Part 1: $count\n";
 $grid->setGoalNode($maxX, 0);
 
 $prevDepth = -1;
@@ -31,8 +52,11 @@ $status = SEARCH_FOR_GOAL_DATA;
 $gridQueue = [$grid];
 while ($grid = array_shift($gridQueue)) {
 	if (
-		$grid->getDepth() != $prevDepth ||
-		($status == MOVE_DATA_TO_ORIGO && $grid->getGoalNodeX() == 0 && $grid->getGoalNodeY() == 0)
+		$animate &&
+		(
+			$grid->getDepth() != $prevDepth ||
+			($status == MOVE_DATA_TO_ORIGO && $grid->getGoalNodeX() == 0 && $grid->getGoalNodeY() == 0)
+		)
 	) {
 		system("clear");
 		echo "\e[42m \e[0m Altered node\n";
@@ -51,7 +75,7 @@ while ($grid = array_shift($gridQueue)) {
 		$gridQueue = [];
 		$shortestPositions = [];
 	} else if ($status == MOVE_DATA_TO_ORIGO && $grid->getGoalNodeX() == 0 && $grid->getGoalNodeY() == 0) {
-		echo "\nPart 2: " . $grid->getDepth() . "\n";
+		echo "Part 2: " . $grid->getDepth() . "\n";
 		die();
 	}
 
@@ -87,14 +111,14 @@ while ($grid = array_shift($gridQueue)) {
 }
 
 
-function findMatches(&$nodes, $node)
+function findMatches(&$nodes, $node, $nodeY, $nodeX)
 {
 	$candidates = [];
 	#echo "inspecting " . $node->getX() . "," . $node->getY() . "\n";
 	foreach ($nodes as $y => $row) {
 		foreach ($row as $x => $testNode) {
 			if (
-				!($x == $node->getX() && $y == $node->getY()) &&
+				!($x == $nodeX && $y == $nodeY) &&
 				$node->getUsed() <= $testNode->getAvail()
 			) {
 				#echo "found match: " . $node->getX() . "," . $node->getY() . " -> $x,$y\n";
@@ -199,6 +223,11 @@ class Grid
 	public function getDepth()
 	{
 		return $this->_depth;
+	}
+
+	public function getNodes()
+	{
+		return $this->_nodes;
 	}
 
 	public function __toString()

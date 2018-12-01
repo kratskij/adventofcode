@@ -56,7 +56,7 @@ $aba = array_filter($input, function($row) {
 #			echo $row . "::" . $c . $s[$k+1] . $s[$k+2] . $s[$k+3] . "\n";
 		}
 	}
-	var_Dump($hf, $found);
+	#var_Dump($hf, $found);
 	foreach ($hf as $h) {
 		if (in_array($h, $found)) {
 			return true;
@@ -65,8 +65,5 @@ $aba = array_filter($input, function($row) {
 	return false;
 });
 
-var_dump($aba);
-echo "Part 1: " . count($abba);
-
-var_dump($aba);
-echo "Part 2: " . count($aba);
+echo "Part 1: " . count($abba) . "\n";
+echo "Part 2: " . count($aba) . "\n";

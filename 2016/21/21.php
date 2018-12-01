@@ -1,13 +1,9 @@
 <?php
 
-$test = true;
+$test = false;
 
 $file = ($test) ? "../test.txt" : "input";
 $input = explode("\n", trim(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . $file)));
-
-$regex = "//";
-
-$values = [];
 
 $pw = "abcdefgh";
 if ($test) {
@@ -16,11 +12,11 @@ if ($test) {
 $prevPw = "";
 foreach ($input as $row) {
 	if ($prevPw == $pw) {
-		echo "NOTHING DONE!\n";
+		#echo "NOTHING DONE!\n";
 		#die();
 	}
 	$prevPw = $pw;
-	echo $row."\n    $pw    ";
+	#echo $row."\n    $pw    ";
 	$arr = str_split($pw);
 	$w = explode(" ", $row);
 	switch($w[0]) {
@@ -36,7 +32,7 @@ foreach ($input as $row) {
 				$pw = str_replace($w[5], $w[2], $pw);
 				$pw = str_replace("[PLACEHOLDER]", $w[5], $pw);
 			} else {
-				echo "fu";
+				#echo "fu";
 			}
 			break;
 		case "rotate":
@@ -98,9 +94,8 @@ foreach ($input as $row) {
 			}
 			break;
 		default:
-			echo "fu2";
+			#echo "fu2";
 	}
-
-	echo $pw . "\n";
-
 }
+echo "Part 1: " . $pw . "\n";
+echo "Part 2: Solved at work, and not committed?\n";

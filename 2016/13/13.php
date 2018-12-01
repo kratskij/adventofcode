@@ -4,7 +4,7 @@ $test = true;
 
 $input = 1364;
 #$input = 10;
-
+$animate = false;
 $grid = [];
 $y = 0 ;
 while (true) {
@@ -27,7 +27,7 @@ while (true) {
 	$y++;
 }
 
-$routes = findRoutes($grid, 1, 1);
+$routes = findRoutes($grid, 1, 1, $animate);
 
 echo "Part 1: " . $routes[39][31] . "\n";
 
@@ -43,7 +43,7 @@ $sum = array_map(
 );
 echo "Part 2: " . array_sum($sum) . "\n";
 
-function findRoutes($grid, $fromY, $fromX) {
+function findRoutes($grid, $fromY, $fromX, $animate) {
 	$grid[$fromY][$fromX] = 0;
 	$prevHash = false;
 	$gridHash = md5(serialize($grid));
@@ -57,7 +57,9 @@ function findRoutes($grid, $fromY, $fromX) {
 							if (isset($grid[$y + $i][$x + $j])) {
 								$n = &$grid[$y + $i][$x + $j];
 								if ($n === true || (is_numeric($n) && $n + 1 < $n)) {
-									printGrid($grid, $y + $i, $x + $j);
+									if ($animate) {
+										printGrid($grid, $y + $i, $x + $j);
+									}
 									$n = $val + 1;
 								}
 							}

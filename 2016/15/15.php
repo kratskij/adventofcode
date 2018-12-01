@@ -3,7 +3,7 @@
 $input = explode("\n", trim(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . "input.txt")));
 $regex = '/Disc #(\d+) has (\d+) positions; at time=(\d+), it is at position (\d+)./';
 
-$visualize = true;
+$animate = false;
 
 $discs = [
 	1 => [], // Part 1
@@ -25,7 +25,7 @@ $prefix = "";
 foreach(range(1,2) as $part) {
 	$time = 0;
 	while (true) {
-		if ($visualize && $time % (97 * $part * $part * $part) == 0) {
+		if ($animate && $time % (97 * $part * $part * $part) == 0) {
 			visualize($part, $discs[$part], $time, $prefix . "Part: $part\nTime: $time\n");
 		}
 		foreach ($discs[$part] as $disc) {
@@ -36,7 +36,7 @@ foreach(range(1,2) as $part) {
 		}
 		break;
 	}
-	if ($visualize) {
+	if ($animate) {
 		$vTime = $time - 20;
 		while ($vTime < $time) {
 			visualize($part, $discs[$part], $vTime, $prefix . "Part: $part\nTime: $vTime\n", 500000 / ($time - $vTime));

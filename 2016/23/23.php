@@ -14,26 +14,14 @@ for ($i = 0; $i < count($input); $i++) {
 	$c++;
 	$row = $input[$i];
 	$matches = explode(" ", $row);
-	#if ($c % 100000 == 0) {
-		#system("clear");
-		echo $row."\n";
-		echo implode(" ", array_keys($values))."\n";
-		echo implode(" ", $values)."\n";
-		usleep(100000);
-	#}
-	#var_dump($input);
-	#echo $row."\n";
-	#echo md5(json_encode($values))."\n";
 	switch ($matches[0]) {
 		case "cpy":
 			$values[$matches[2]] = is_numeric($matches[1]) ? (int)$matches[1] : $values[$matches[1]];
-			#echo $matches[0] . " " . $matches[1] . " " . $matches[2] . "\n";
 			break;
 
 		case "inc":
 		 	#x increases the value of register x by one.
 			$values[$matches[1]]++;
-			#echo $matches[0] . " " . $matches[1] . "\n";
 			break;
 
 		case "dec":
@@ -48,9 +36,7 @@ for ($i = 0; $i < count($input); $i++) {
 
 			if ($cmp != 0)  {
 				$i += $steps - 1;
-				#echo $i."\n";
-			}
-			#echo $matches[0] . " " . $matches[1] . " " . $matches[2] . (string)($values[$matches[1]] != 0) . "\n";
+				}
 			break;
 
 		case "tgl":
@@ -78,14 +64,10 @@ for ($i = 0; $i < count($input); $i++) {
 				}
 			}
 			$input[$i + $value] = implode(" ", $instructionSplit);
-			echo $input[$i + $value] . "\n";
 			break;
 		default:
 			echo "WTF";
-
 	}
 }
 
-
-
-var_dump($values);
+echo "Part 2: " . array_pop($values);
