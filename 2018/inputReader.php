@@ -23,6 +23,16 @@ class InputReader {
         return str_split($this->rawData);
     }
 
+    public function regex($pattern) {
+        $return = [];
+        foreach ($this->lines() as $line) {
+            preg_match("/$pattern/i", $line, $matches);
+            array_shift($matches);
+            $return[] = $matches;
+        }
+        return $return;
+    }
+
     public function csv($separator) {
         return array_map(
             function($line) use ($separator) {
