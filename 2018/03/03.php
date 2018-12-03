@@ -5,43 +5,41 @@ ini_set('memory_limit','2048M');
 $test = isset($argv[1]) && $argv[1] == "test";
 $file = ($test) ? "test" : "input";
 
-require_once("../inputReader.php");
+require_once(__DIR__."/../inputReader.php");
 
 $ir = new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file);
-$input = $ir->lines();
-
+$input = $ir->regex("#(\d+)\s\@\s(\d+),(\d+)\:\s(\d+)x(\d+)");
 $area = [];
+$sum = 0;
 foreach ($input as $k => $i) {
-    list($id, $at, $pos, $size) = explode(" ", $i);
-    $id = substr($id, 1);
-    list($leftOffset, $topOffset) = explode(",", $pos);
-    $topOffset = substr($topOffset, 0, -1);
-    list($width, $height) = explode("x", $size);
-
+    list($id, $leftOffset, $topOffset, $width, $height) = $i;
     for ($x = $leftOffset; $x < $leftOffset + $width; $x++) {
         for ($y = $topOffset; $y < $topOffset + $height; $y++) {
-            $area[$x][$y][] = $id;
+            if (!isset($area[$x][$y])) {
+                $area[$x][$y] = 0;
+            }
+            $area[$x][$y]++;
+            if ($area[$x][$y] == 2) {
+                $sum++;
+            }
         }
     }
 }
 
-$sum = 0;
-$ids = [];
-foreach ($area as $x => $a) {
-    foreach ($a as $y => $b) {
-        if (count($b) > 1) {
-            $sum++;
-        }
-        foreach ($b as $id) {
-            $ids[$id] = max(count($b), $ids[$id]);
-        }
-    }
-}
 echo "Part 1: $sum\n";
 
-foreach ($ids as $id => $e) {
-    if ($e == 1) {
-        echo "Part 2: $id\n";
-        exit;
+$min = [INF, null];
+foreach ($input as $k => $i) {
+    list($id, $leftOffset, $topOffset, $width, $height) = $i;
+    $max = 0;
+    for ($x = $leftOffset; $x < $leftOffset + $width; $x++) {
+        for ($y = $topOffset; $y < $topOffset + $height; $y++) {
+            $max = max($max, $area[$x][$y]);
+        }
+    }
+    if ($max < $min[0]) {
+        $min = [$max, $id];
     }
 }
+
+echo "Part 2: {$min[1]}\n";
