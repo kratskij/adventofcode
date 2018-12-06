@@ -10,210 +10,50 @@ require_once(__DIR__."/../inputReader.php");
 $ir = new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file);
 $input = $ir->regex("(\d+)\,\s(\d+)");
 
-// Cast to int
-#$input = array_map("intval", $input);
+$regionLimit = $test ? 32 : 10000;
 
-$val = false;
-
-$grid = [];
-
-$maxX = -INF;
-$maxY = -INF;
-$minX = INF;
-$minY = INF;
-
-
-$areas = [];
-$counts = [];
-
-foreach ($input as $k => $i) {
-    list($y, $x) = $i;
-    $y = (int)$y;
-    $x = (int)$x;
-
-    $maxX = max($x, $maxX);
-    $maxY = max($y, $maxY);
-    $minX = min($x, $minX);
-    $minY = min($y, $minY);
-
-    $grid[$x][$y] = $k;
-    $counts[$x][$y] = 1;
+$nodes = [];
+foreach ($input as $id => $line) {
+    $nodes[$id] = [
+        "x" => (int)$line[1],
+        "y" => (int)$line[0],
+        "size" => 0,
+        "infinite" => false
+    ];
 }
-/*
-for ($a = $minX; $a <= $maxX; $a++) {
-    for ($b = $minY; $b <= $maxY; $b++) {
-        $search = search($grid, [ [$a,$b] ]);
-    }
-}
+$minX = min(array_map(function($node) { return $node["x"]; }, $nodes));
+$maxX = max(array_map(function($node) { return $node["x"]; }, $nodes));
+$minY = min(array_map(function($node) { return $node["y"]; }, $nodes));
+$maxY = max(array_map(function($node) { return $node["y"]; }, $nodes));
 
-function search($grid, $coords) {
-    foreach ($coords as $c) {
-
-    }
-}*/
-/*
-$area = $grid;
-
-for ($a = 0; $a < $maxX; $a++) {
-    $toClaim = [];
-    foreach ($area as $x => $rows) {
-        foreach ($rows as $y => $id) {
-            if (!isset($area[$x+$a][$y])) {
-                if (!isset($toClaim[$x+$a][$y])) {
-                    $counts[$x][$y]++;
-                    $toClaim[$x+$a][$y] = $id;
-                } else {
-                    $toClaim[$x+$a][$y] = false;
-                }
-            }
-            if (!isset($area[$x][$y+$a])) {
-                if (!isset($toClaim[$x][$y+$a])) {
-                    $counts[$x][$y]++;
-                    $toClaim[$x][$y+$a] = $id;
-                } else {
-                    $toClaim[$x][$y+$a] = false;
-                }
-            }
-            if (!isset($area[$x-$a][$y])) {
-                if (!isset($toClaim[$x-$a][$y])) {
-                    $counts[$x][$y]++;
-                    $toClaim[$x-$a][$y] = $id;
-                } else {
-                    $toClaim[$x-$a][$y] = false;
-                }
-            }
-            if (!isset($area[$x][$y-$a])) {
-                if (!isset($toClaim[$x][$y-$a])) {
-                    $counts[$x][$y]++;
-                    $toClaim[$x][$y-$a] = $id;
-                } else {
-                    $toClaim[$x][$y-$a] = false;
-                }
-            }
-        }
-    }
-    foreach ($toClaim as $k => $c) {
-        $toClaim[$k] = array_filter($c);
-    }
-    $area = array_merge($area, $toClaim);
-}*/
-/*
-            if (!isset($area[$x+$a][$y+$a])) {
-                $counts[$x][$y]++;
-                $area[$x+$a][$y+$a] = $id;
-            }
-            if (!isset($area[$x-$a][$y-$a])) {
-                $counts[$x][$y]++;
-                $area[$x-$a][$y-$a] = $id;
-            }
-            if (!isset($area[$x-$a][$y+$a])) {
-                $counts[$x][$y]++;
-                $area[$x-$a][$y+$a] = $id;
-            }
-            if (!isset($area[$x+$a][$y-$a])) {
-                $counts[$x][$y]++;
-                $area[$x+$a][$y-$a] = $id;
-            })*/
-
-$area = $grid;
+$totalDistancesRegionCount = 0;
 for ($x = $minX; $x <= $maxX; $x++) {
+    $edgeX = ($x == $minX) || ($x == $maxX);
     for ($y = $minY; $y <= $maxY; $y++) {
-        echo "AT $x,$y\n";
-        if (isset($grid[$x][$y])) {
-            continue;
-        }
-        $search = [$x . "_" . $y];
-        while ($search) {
-            $ret = search($search, $grid);
-            var_Dump($ret);
-
-            if ($ret[0] == 1) {
-                #var_Dump($set ,$x, $y); die();
-                $area[$x][$y] = $ret[1][0];
-                #echo "$x,$y\n";
-                #$change = true;
-                #echo strtoupper(chr(65+$set[0]));
-                echo "FOUND" .  $ret[1][0]."\n";
-                $search = false;
-                break;
-            }
-            if ($ret[0] > 1) {
-                $search = false;
-                break;
+        $edgeY = ($y == $minY) || ($y == $maxY);
+        $closest = ["distance" => INF, "id" => false];
+        $totalDistance = 0;
+        foreach ($nodes as $id => $node) {
+            $distance = abs($node["x"]-$x) + abs($node["y"]-$y);
+            $totalDistance += $distance;
+            if ($distance < $closest["distance"]) {
+                $closest["id"] = $id;
+                $closest["distance"] = $distance;
+            } elseif ($distance == $closest["distance"]) {
+                $closest["id"] = false;
             }
         }
-    }
-}
-#}
-#var_dump($area);die();
-
-function search(&$search, &$grid) {
-    $count = 0;
-    $nextSearch = [];
-    while ($search) {
-        $next = array_shift($search);
-        #var_Dump($next);
-        $coords = explode("_", $next);
-        #var_Dump($coords[1]);
-        if (isset($grid[$coords[0]+1][$coords[1]])) {
-            $count++;
-            $set = [$grid[$coords[0]+1][$coords[1]], $coords[0]+1, $coords[1]];
+        if ($totalDistance < $regionLimit) {
+            $totalDistancesRegionCount++;
         }
-        if (isset($grid[$coords[0]][$coords[1]+1])) {
-            $count++;
-            $set = [$grid[$coords[0]][$coords[1]+1], $coords[0], $coords[1]+1];
-        }
-        if (isset($grid[$coords[0]-1][$coords[1]])) {
-            $count++;
-            $set = [$grid[$coords[0]-1][$coords[1]], $coords[0]-1, $coords[1]];
-        }
-        if (isset($grid[$coords[0]][$coords[1]-1])) {
-            $count++;
-            $set = [$grid[$coords[0]][$coords[1]-1], $coords[0], $coords[1]-1];
-        }
-
-        $nextSearch[] = ($coords[0]+1) . "_" . ($coords[1]);
-        $nextSearch[] = ($coords[0]) . "_" . ($coords[1]+1);
-        $nextSearch[] = ($coords[0]-1) . "_" . ($coords[1]);
-        $nextSearch[] = ($coords[0]) . "_" . ($coords[1]-1);
-    }
-    $search = array_unique($nextSearch);
-
-    return [$count, $set];
-
-}
-
-for ($x = $minX; $x <= $maxX; $x++) {
-    for ($y = $minY; $y <= $maxY; $y++) {
-        if (isset($grid[$x][$y])) {
-            echo strtoupper(chr(65+$grid[$x][$y]));
-        } else if (isset($area[$x][$y])) {
-            echo strtolower(chr(65+$area[$x][$y]));
-        } else {
-            echo ".";
-        }
-    }
-    echo "\n";
-}
-
-$counts = [];
-$boundaries = [];
-for ($x = $minX; $x <= $maxX; $x++) {
-    for ($y = $minY; $y <= $maxY; $y++) {
-        if (isset($area[$x][$y])) {
-            $counts[$area[$x][$y]]++;
-            if ($x == $minX || $y == $minY || $x == $maxX || $y == $maxY) {
-                $boundaries[$area[$x][$y]] = true;
+        if ($closest["id"] !== false) {
+            $nodes[$closest["id"]]["size"]++;
+            if ($edgeX || $edgeY) {
+                $nodes[$closest["id"]]["infinite"] = true;
             }
         }
     }
 }
-
-$max = 0;
-foreach ($counts as $i => $c) {
-    if (!isset($boundaries[$i])) {
-        $max = max($max, $c);
-    }
-}
-echo $max;
-#var_Dump($counts);die();
+$max = max(array_map(function($node) { return $node["infinite"] ? -INF : $node["size"]; }, $nodes));
+echo "Part 1: $max\n";
+echo "Part 2: $totalDistancesRegionCount\n";
