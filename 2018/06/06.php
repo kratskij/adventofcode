@@ -21,10 +21,10 @@ foreach ($input as $id => $line) {
         "infinite" => false
     ];
 }
-$minX = min(array_map(function($node) { return $node["x"]; }, $nodes));
-$maxX = max(array_map(function($node) { return $node["x"]; }, $nodes));
-$minY = min(array_map(function($node) { return $node["y"]; }, $nodes));
-$maxY = max(array_map(function($node) { return $node["y"]; }, $nodes));
+$minX = min(array_column($nodes, "x"));
+$maxX = max(array_column($nodes, "x"));
+$minY = min(array_column($nodes, "y"));
+$maxY = max(array_column($nodes, "y"));
 
 $totalDistancesRegionCount = 0;
 for ($x = $minX; $x <= $maxX; $x++) {
