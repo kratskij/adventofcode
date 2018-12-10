@@ -24,6 +24,8 @@ while ($area == INF || $area < $prevArea) {
     $prevArea = $area;
     $area = (max($xs)-min($xs)) * (max($ys)-min($ys));
 }
+$seconds--;
+
 $positions = [];
 foreach ($input as $line) {
     $positions[$line[1] - $line[3]][$line[0] - $line[2]] = true;
