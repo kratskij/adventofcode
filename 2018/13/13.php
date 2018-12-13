@@ -9,6 +9,7 @@ require_once(__DIR__."/../inputReader.php");
 
 $ir = new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file);
 $input = explode("\n", $ir->raw());
+$animate = false;
 
 $grid = [];
 
@@ -49,9 +50,8 @@ foreach ($grid as $y => $row) {
 }
 
 $seconds = 0;
-$dieAtNext = false;
+$remainingCarts = $carts;
 while (true) {
-    echo "NEW SECOND!" . ++$seconds."\n";
     usort($carts, function($a, $b) {
         if ($a["y"] == $b["y"]) {
             return $a["x"] - $b["x"];
@@ -59,8 +59,6 @@ while (true) {
         return $a["y"] - $b["y"];
     });
     for ($idx = 0; $idx < count($carts); $idx++) {
-        #echo "IDX " . $idx."\n";
-
         if ($carts[$idx]["in"]) {
             switch ($carts[$idx]["dir"]) {
                 case CART_LEFT:
@@ -116,91 +114,54 @@ while (true) {
                     $carts[$idx]["in"] = false;
                     $carts[$idx2]["in"] = false;
 
-                    echo "CRASH AT " . $carts[$idx]["x"] . "," . $carts[$idx]["y"] . " after $seconds seconds!\n";
-                    #die();
-                    #break 3;
+                    static $p1;
+                    if ($p1 === null) {
+                        $p1 = true;
+                        echo "Part 1: " . $carts[$idx]["x"] . "," . $carts[$idx]["y"] . "\n";
+                    }
                 }
             }
-
-
-
-        } else {
-            #echo "outcart?";
         }
-        if ($dieAtNext !== false) {
-            $out = "";
-            foreach ($grid as $y => $row) {
-                foreach ($row as $x => $val) {
-                    $cartFound = false;
-                    $cartCopy = $carts;
-                    foreach ($cartCopy as $idx3 => $cart) {
-                        if ($cart["x"] == $x && $cart["y"] == $y) {
-                            if (!$cart["in"]) {
-                                $out .= "\033[1;31mX\033[0m";
-                            } else {
-                                $out .= "\033[1;37m".array_flip($dirMap)[$cart["dir"]]."\033[0m";
-                            }
-                            $cartFound = true;
-                            break;
+
+        if (count($remainingCarts) == 1) {
+            $cart = reset($remainingCarts);
+            echo "Part 2: {$cart['x']},{$cart['y']}\n";
+            die();
+        }
+        $remainingCarts = array_filter(
+            $carts,
+            function($cart) { return $cart["in"]; }
+        );
+    }
+
+    if ($animate) {
+        $out = "";
+        foreach ($grid as $y => $row) {
+            foreach ($row as $x => $val) {
+                $cartFound = false;
+                $cartCopy = $carts;
+                foreach ($cartCopy as $idx3 => $cart) {
+                    if ($cart["x"] == $x && $cart["y"] == $y) {
+                        if (!$cart["in"]) {
+                            $out .= "\033[1;31mX\033[0m";
+                        } else {
+                            $out .= "\033[1;37m".array_flip($dirMap)[$cart["dir"]]."\033[0m";
                         }
-                    }
-                    if (!$cartFound) {
-                        $out .= $val;
+                        $cartFound = true;
+                        break;
                     }
                 }
-                $out .= "\n";
+                if (!$cartFound) {
+                    $out .= $val;
+                }
             }
             $out .= "\n";
-            echo $out;
-            var_Dump(array_filter($carts, function($c) { return $c["in"]; }));
-            if (++$dieAtNext > 0) {
-                die();
-            }
-            continue 2;
-        }
-        echo "LEFT: " . count(array_filter(array_column($carts, "in")))."\n";
-        if (count(array_filter(array_column($carts, "in"))) == 1) {
-            #var_Dump(array_filter($carts, function($c) { return $c["in"]; }));
-            #die();
-            $dieAtNext = 0;
-        }
-    }
-/*
-    $out = "";
-    foreach ($grid as $y => $row) {
-        foreach ($row as $x => $val) {
-            $cartFound = false;
-            $cartCopy = $carts;
-            foreach ($cartCopy as $idx3 => $cart) {
-                if ($cart["x"] == $x && $cart["y"] == $y) {
-                    if (!$cart["in"]) {
-                        $out .= "\033[1;31mX\033[0m";
-                    } else {
-                        $out .= "\033[1;37m".array_flip($dirMap)[$cart["dir"]]."\033[0m";
-                    }
-                    $cartFound = true;
-                    break;
-                }
-            }
-            if (!$cartFound) {
-                $out .= $val;
-            }
         }
         $out .= "\n";
+        system("clear");
+        echo $out;
+        usleep(1000000);
     }
-    $out .= "\n";
-    #system("clear");
-    echo $out;
-    usleep(1000000);
-*/
 
-#var_Dump($grid);
 }
 echo $val;
-
-#37,46
-
-#p2: 95,54
-#p2: 96,54
-#p2: 94,54
-#p2: 93,54
