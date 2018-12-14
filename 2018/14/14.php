@@ -27,19 +27,17 @@ echo "Part 1: " . substr($recipes, -10) . "\n";
 
 $recipes = "3710";
 
-$elfs = [
-    ['index' => 0],
-    ['index' => 1]
-];
+$elfs = [0,1];
 
-while (strpos($recipes, $input[1]) === false) {
+$max = 0;
+while (substr($recipes, -6) != $input[1]) {
     $sum = 0;
     foreach ($elfs as $idx => $e) {
-        $sum += (int)$recipes[$e["index"]];
+        $sum += (int)$recipes[$e];
     }
     $recipes .= (string)$sum;
     foreach ($elfs as $idx => $e) {
-        $elfs[$idx]["index"] = ($e["index"] + 1 + $recipes[$e["index"]]) % strlen($recipes);
+        $elfs[$idx] = ($e + 1 + $recipes[$e]) % strlen($recipes);
     }
 }
 echo "Part 2: " . strpos($recipes, $input[1]) . "\n";
