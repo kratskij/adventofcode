@@ -66,7 +66,7 @@ foreach ($grid as $row) {
     }
 }
 
-printGrid($grid, $minY, $maxY);
+#printGrid($grid, $minY, $maxY);
 echo "Part 1: " . ($still + $flow) . "\n";
 echo "Part 2: $still\n";
 
