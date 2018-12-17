@@ -7,15 +7,10 @@ $file = ($test) ? "test" : "input";
 
 require_once(__DIR__."/../inputReader.php");
 
-$ir = (new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file))->trim(true);
+$ir = (new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file));
 $input = $ir->regex("^(\w)\=([\d\-]+)\,\s(\w)\=([\d\-]+)\.\.([\d\-]+)$");
 
-// Cast to int
-#$input = array_map("intval", $input);
-
-$val = false;
 $grid = [];
-
 foreach ($input as $k => $line) {
     list($y, $val1, $x, $from, $to) = $line;
     for ($i = $from; $i <= $to; $i++) {
@@ -26,148 +21,134 @@ foreach ($input as $k => $line) {
         }
     }
 }
-printGrid($grid);
-#var_Dump($grid);
 
-$new = true;
-define("FALLING", 1);
-define("SEARCH_LEFT", 2);
-define("SEARCH_RIGHT", 3);
+$minY = min(array_keys($grid));
+$maxY = max(array_keys($grid));
 
 $fillers = [
-    ["y" => 0, "x" => 500, "mode" => FALLING]
+    ["y" => $minY, "x" => 500]
 ];
-$maxY = max(array_keys($grid));
-$filled = [];
 
+$filled = [];
 while ($fillers) {
     $newFillers = [];
-    foreach ($fillers as &$filler) {
-        move($grid, $filler["y"], $filler["x"], $filler["mode"], $newFillers, $filled);
-        fill($grid, $filler["y"], $filler["x"], $filler["mode"], false, $filled);
-        if (!isset($grid[$filler["y"]+1][$filler["x"]])) {
-            $filler["mode"] = FALLING;
-        } else if (isset($grid[$filler["y"]+1][$filler["x"]]) && $grid[$filler["y"]+1][$filler["x"]] == "#") {
-            fill($grid, $filler["y"]+1, $filler["x"], $filler["mode"], true, $filled);
-        }
-    }
-    $fillers = array_merge($fillers, $newFillers);
-    $fillers = array_filter($fillers, function($filler) use ($maxY) {
-        return $filler["y"] <= $maxY;
-    });
-    $uniqueFillers = [];
-    foreach ($fillers as $f) {
-        $uniqueFillers[$f["y"] . "_" . $f["x"] . "_" . $f["mode"]] = $f;
-    }
-    $fillers = $uniqueFillers;
-    #printGrid($grid, $fillers, $filled);
+    foreach ($fillers as $key => &$filler) {
+        $x = &$filler["x"];
+        $y = &$filler["y"];
 
-    echo "Filled: " . count($filled) . "\n";
-
-
-
-
-}
-printGrid($grid, [], $filled);
-
-function fill(&$grid, $y, $x, $mode, $clay = false, &$filled) {
-    if (!$clay) {
-        if (($mode == FALLING)) {
+        //fall until we reach something
+        while (!isset($grid[$y][$x])) {
             $grid[$y][$x] = "|";
-        } else {
-            $grid[$y][$x] = "~";
             $filled[$y."_".$x] = true;
-        }
-    } else if ($grid[$y][$x] == "#"){
-        $filled[$y."_".$x] = true;
-    } else {
-        die('NO');
-    }
-}
-
-function move($grid, &$y, &$x, &$mode, &$newFillers, &$filled) {
-    switch ($mode) {
-        case FALLING:
             $y++;
-            if (isset($grid[$y][$x])) {
-                if ($grid[$y][$x] == "#") {
-                    $y--;
-                    $mode = SEARCH_LEFT;
-                    $newFillers[] = ["y" => $y, "x" => $x, "mode" => SEARCH_RIGHT];
-                    return;
-                } elseif ($grid[$y][$x] == "|") {
-                    return;
-                }
-                move($grid, $y, $x, $mode, $newFillers, $filled);
+            if ($y > $maxY) { // We reched the bottom
+                continue 2;
             }
-            break;
-        case SEARCH_LEFT:
-            $x--;
-            if (isset($grid[$y][$x])) {
-                if ($grid[$y][$x] == "#") {
-                    fill($grid, $y, $x, $mode, true, $filled);
-                    #$y--;
-                    $x++;
-                    $mode = SEARCH_RIGHT;
-                    return;
-                } elseif ($grid[$y][$x] == "|") {
-                    return;
-                } elseif ($grid[$y][$x] == "~") {
-                    //visited by another filler!
-                    $mode = SEARCH_RIGHT;
-                }
-                move($grid, $y, $x, $mode, $newFillers, $filled);
-            }
-            break;
-        case SEARCH_RIGHT:
-            $x++;
-            if (isset($grid[$y][$x])) {
-                if ($grid[$y][$x] == "#") {
-                    fill($grid, $y, $x, $mode, true, $filled);
-                    $y--;
-                    $x--;
-                    $mode = SEARCH_LEFT;
-                    return;
-                } elseif ($grid[$y][$x] == "|") {
-                    return;
-                }
-                move($grid, $y, $x, $mode, $newFillers, $filled);
-            }
-            break;
-    }
-}
+        }
 
-function printGrid($grid, $fillers, $filled) {
-    var_Dump($filled);
+        if ($grid[$y][$x] == "|") {
+            // we landed in water! gtfo
+            continue;
+        }
+
+        //fill to the sides
+        $xSpread = 0;
+        $rightStopReason = $leftStopReason = false;
+        while (true) {
+            if ($leftStopReason == "WALL" && $rightStopReason == "WALL") {
+                //wall on both sides; step up, start at same position
+                $y--;
+                $xSpread = 0;
+                $leftStopReason = $rightStopReason = false;
+            } else if (
+                ($leftStopReason == "WALL" && $rightStopReason == "FREEFALL") ||
+                ($leftStopReason == "FREEFALL" && $rightStopReason == "WALL") ||
+                ($leftStopReason == "FREEFALL" && $rightStopReason == "FREEFALL")
+            ) {
+                // We're done in this bucket. Fill the top layer with pipes, for some reason
+                $origX = $x;
+                while (isset($grid[$y][$x]) && $grid[$y][$x] == "~") {
+                    $grid[$y][$x] = "|";
+                    $x--;
+                }
+                $x = $origX + 1;
+                while (isset($grid[$y][$x]) && $grid[$y][$x] == "~") {
+                    $grid[$y][$x] = "|";
+                    $x++;
+                }
+                break;
+            }
+
+            if (!$leftStopReason) { // We haven't stopped travelling to the left yet
+                $leftX = $x-$xSpread;
+                if (isset($grid[$y][$leftX]) && $grid[$y][$leftX] == "#") { // we hit a wall
+                    $leftStopReason = "WALL";
+                } else if (@$grid[$y+1][$leftX] == "|") { //we hit a stream! Annoying bug
+                    #printGrid($grid, $fillers, $filled, 5000);
+                    #var_dump($y, $x);
+                    #die('hoi');
+                    $leftStopReason = "FREEFALL";
+                } else {
+                    $grid[$y][$leftX] = "~";
+                    $filled[$y."_".($leftX)] = true;
+                    if (!isset($grid[$y+1][$leftX])) { // we hit an edge! create new filler?
+                        $newFillers[] = ["x" => $leftX, "y" => $y+1];
+                        $leftStopReason = "FREEFALL";
+                    }
+                }
+            }
+
+            if (!$rightStopReason) {  // We haven't stopped travelling to the right yet
+                $rightX = $x+$xSpread;
+                if (isset($grid[$y][$rightX]) && $grid[$y][$rightX] == "#") { // we hit a wall
+                    $rightStopReason = "WALL";
+                } else if (@$grid[$y+1][$rightX] == "|") { //we hit a stream! Annoying bug
+                    #printGrid($grid, $fillers, $filled, 5000);
+                    #var_dump($y, $x);
+                    #die('hoi2');
+                    $leftStopReason = "FREEFALL";
+                } else {
+                    $grid[$y][$rightX] = "~";
+                    $filled[$y."_".($rightX)] = true;
+                    if (!isset($grid[$y+1][$rightX])) { // we hit an edge! create new filler?
+                        $newFillers[] = ["x" => $rightX, "y" => $y+1];
+                        $rightStopReason = "FREEFALL";
+                    }
+                }
+            }
+            $xSpread++;
+        }
+    }
+
+    // replace all the old fillers with the new ones
+    $nf = [];
+    foreach ($newFillers as $f) {
+        $nf[$f["y"]."_".$f["x"]] = $f;
+    }
+    $fillers = $nf;
+}
+#printGrid($grid, $fillers, $filled, 1000000, $minY, $maxY);
+
+echo "Part 1: ". count($filled) . "\n";
+echo "Part 2: ". array_sum(array_map(function($row) { return count(array_filter($row, function($r) { return $r == "~"; })); }, $grid)) . "\n";
+
+function printGrid($grid, $fillers, $filled, $sleep = 0, $from, $to) {
+    #system("clear");
     $maxX = -INF;
     $minX = INF;
     foreach ($grid as $g) {
         $maxX = max($maxX, max(array_keys($g)));
         $minX = min($minX, min(array_keys($g)));
     }
-    var_dump($minX, $maxX);
-    #die();
-    $xLines = [0 => "", 1 => "", 2 => ""];
-    for ($x = $minX; $x <= $maxX; $x++) {
-        $xLines[0] .= substr($x, 0, 1);
-        $xLines[1] .= substr($x, 1, 1);
-        $xLines[2] .= substr($x, 2, 1);
-    }
-    foreach ($xLines as $line) {
-        echo "     $line\n";
-    }
-    for ($y = 0; $y <= max(array_keys($grid)); $y++) {
+
+    for ($y = $from; $y <= $to; $y++) {
         echo str_pad($y, 5, " ", STR_PAD_RIGHT);
         for ($x = $minX; $x <= $maxX; $x++) {
             if (isset($filled[$y."_".$x])) {
                 echo "\033[1;32m";
             }
-            if (isset($fillers[$y . "_" . $x . "_1"])) {
+            if (isset($fillers[$y . "_" . $x])) {
                 echo "▼";
-            } elseif (isset($fillers[$y . "_" . $x . "_2"])) {
-                echo "◀";
-            } elseif (isset($fillers[$y . "_" . $x . "_3"])) {
-                echo "▶";
             } else {
                 echo isset($grid[$y][$x]) ? $grid[$y][$x] : ".";
             }
@@ -178,4 +159,7 @@ function printGrid($grid, $fillers, $filled) {
         echo "\n";
     }
     echo "\n";
+    if ($sleep) {
+        usleep($sleep);
+    }
 }
