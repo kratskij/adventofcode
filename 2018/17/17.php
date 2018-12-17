@@ -160,17 +160,19 @@ function printGrid($grid, $fillers, $filled) {
         echo str_pad($y, 5, " ", STR_PAD_RIGHT);
         for ($x = $minX; $x <= $maxX; $x++) {
             if (isset($filled[$y."_".$x])) {
-                echo "8";
+                echo "\033[1;32m";
+            }
+            if (isset($fillers[$y . "_" . $x . "_1"])) {
+                echo "▼";
+            } elseif (isset($fillers[$y . "_" . $x . "_2"])) {
+                echo "◀";
+            } elseif (isset($fillers[$y . "_" . $x . "_3"])) {
+                echo "▶";
             } else {
-                if (isset($fillers[$y . "_" . $x . "_1"])) {
-                    echo "▼";
-                } elseif (isset($fillers[$y . "_" . $x . "_2"])) {
-                    echo "◀";
-                } elseif (isset($fillers[$y . "_" . $x . "_3"])) {
-                    echo "▶";
-                } else {
-                    echo isset($grid[$y][$x]) ? $grid[$y][$x] : ".";
-                }
+                echo isset($grid[$y][$x]) ? $grid[$y][$x] : ".";
+            }
+            if (isset($filled[$y."_".$x])) {
+                echo "\033[0m";
             }
         }
         echo "\n";
