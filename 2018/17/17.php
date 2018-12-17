@@ -7,7 +7,7 @@ $file = ($test) ? "test" : "input";
 
 require_once(__DIR__."/../inputReader.php");
 
-$ir = (new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file));
+$ir = (new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file))->trim(true);
 $input = $ir->regex("^(\w)\=([\d\-]+)\,\s(\w)\=([\d\-]+)\.\.([\d\-]+)$");
 
 $grid = [];

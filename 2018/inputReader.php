@@ -5,7 +5,14 @@ class InputReader {
     private $rawData;
 
     public function __construct($file) {
-        $this->rawData = trim(file_get_contents($file));
+        $this->rawData = file_get_contents($file);
+    }
+    public function trim($areYouSure = false) {
+        $this->rawData = trim($this->rawData);
+        if (!$areYouSure) {
+            echo "REMINDER: Trimming input data.\n";
+        }
+        return $this;
     }
 
     public function raw() {
