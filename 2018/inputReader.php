@@ -29,6 +29,19 @@ class InputReader {
     public function chars() {
         return str_split($this->rawData);
     }
+    public function grid($convertables) {
+        $ret = [];
+        foreach ($this->lines() as $y => $line) {
+            foreach (str_split($line) as $x => $char) {
+                if (isset($convertables[$char])) {
+                    $ret[$y][$x] = $convertables[$char];
+                } else {
+                    $ret[$y][$x] = $char;
+                }
+            }
+        }
+        return $ret;
+    }
 
     public function regex($pattern) {
         $return = [];
