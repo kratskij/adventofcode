@@ -4,7 +4,7 @@ require_once(__DIR__."/../inputReader.php");
 $test = isset($argv[1]) && $argv[1] == "test";
 $file = ($test) ? "test" : "input";
 $ir = new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file);
-$input = $ir->trim()->lines();
+$input = $ir->trim(true)->lines();
 
 $initFuel = $totalFuel = 0;
 foreach ($input as $line) {
