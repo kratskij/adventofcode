@@ -19,7 +19,7 @@ for ($i = $from; $i <= $to; $i++) {
 }
 
 echo "Part 1: $part1\n";
-echo "Part 2: $part2\n"; #798, 227
+echo "Part 2: $part2\n";
 
 function valid($number, $partOfGroup=false) {
     $hasDouble = false;
