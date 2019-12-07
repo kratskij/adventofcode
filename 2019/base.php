@@ -13,7 +13,7 @@ $input = $ir->lines();
 #$input = $ir->chars();
 #$input = $ir->csv("\t");
 #$input = $ir->explode(",");
-#list($id, $leftOffset, $topOffset, $width, $height) = $i;
+#$input = $ir->regex(",");
 
 // Cast to int
 #$input = array_map("intval", $input);
@@ -21,6 +21,6 @@ $input = $ir->lines();
 $val = false;
 
 foreach ($input as $k => $i) {
-    #list($regexstuff) = $i;
+    #list($width, $height) = $i;
 }
 echo $val;
