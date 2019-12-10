@@ -66,7 +66,7 @@ while ($base) {
     foreach ($base as $angle => $asteroids) {
         if (!empty($asteroids)) {
             $c++;
-            $target = array_shift($asteroids);
+            $target = array_shift($base[$angle]);
             if ($c == 200) {
                 $magicNumber = ($target["x"] * 100 + $target["y"]);
                 echo "Part 2: $magicNumber\n";
