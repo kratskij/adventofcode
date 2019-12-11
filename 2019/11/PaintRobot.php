@@ -37,7 +37,7 @@ class PaintRobot extends IntCodeComputer {
         return $painted;
     }
 
-    function getRegistrationIdentifier() {
+    function getRegistrationIdentifier($animate = false) {
         $minY = $minX = PHP_INT_MAX;
         $maxY = $maxX = -PHP_INT_MAX;
         foreach ($this->_grid as $y => $row) {
@@ -50,7 +50,11 @@ class PaintRobot extends IntCodeComputer {
         $out = "\n";
         for ($y = $minY; $y <= $maxY; $y++) {
             for ($x = $minX; $x <= $maxX; $x++) {
-                $out .= (isset($this->_grid[$y]) && isset($this->_grid[$y][$x]) && $this->_grid[$y][$x] == self::WHITE) ? "▉" : " ";
+                if ($animate && $y == $this->_yCoord && $x == $this->_xCoord) {
+                    $out .= "O";
+                } else {
+                    $out .= (isset($this->_grid[$y]) && isset($this->_grid[$y][$x]) && $this->_grid[$y][$x] == self::WHITE) ? "▉" : " ";
+                }
             }
             $out .= "\n";
         }
@@ -99,16 +103,20 @@ class PaintRobot extends IntCodeComputer {
         }
     }
 
-    public function paint($overrideColor) {
+    public function paint($overrideColor, $animate = false) {
         while (true) {
             if ($overrideColor !== null) {
                 $this->paintPanel($overrideColor);
                 $overrideColor = null;
             }
             $color = $this->getPanelColor();
-
             try {
                 $this->paintPanel($this->in($color));
+                if ($animate) {
+                    system("clear");
+                    echo "\n{$this->getRegistrationIdentifier(true)}\n";
+                    usleep(100000);
+                }
                 $this->move($this->in($color));
             } catch (End $e) {
                 return;
