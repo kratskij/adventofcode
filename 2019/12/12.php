@@ -12,11 +12,11 @@ $ir = new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file);
 $input = $ir->trim(true)->regex("\<x=(\-?\d+),\sy=(\-?\d+),\sz=(\-?\d+)\>");
 
 $moons = [];
-foreach ($input as $i) {
+foreach ($input as $line) {
     $moon = [];
-    $moon["x"] = intval($i[0]);
-    $moon["y"] = intval($i[1]);
-    $moon["z"] = intval($i[2]);
+    $moon["x"] = intval($line[0]);
+    $moon["y"] = intval($line[1]);
+    $moon["z"] = intval($line[2]);
     $moon["v"] = [
         "x" => 0,
         "y" => 0,
@@ -24,73 +24,89 @@ foreach ($input as $i) {
     ];
     $moons[] = $moon;
 }
+echo "Part 1: " . energyAt($moons, 1000) . "\n";
+echo "Part 2: " . repeatsAt($moons, ["x", "y", "z"]) . "\n";
 
-$moonCount = count($moons);
-
-$states = [];
-
-$i = 0;
-$hashBase = "";
-foreach ($moons as $moon) {
-    $hashBase .= "{$moon['x']},{$moon['y']},{$moon['z']},";
-}
-$firstHash = $hashBase;
-
-while(true) {
-    $allZero = true;
+function tick(&$moons, $axis) {
+    $moonCount = count($moons);
     foreach ($moons as $id => $moon) {
-        //apply gravity
-        for ($nid = $id+1; $nid < $moonCount; $nid++) {
-            if ($moons[$nid]["x"] != $moons[$id]["x"]) {
-                $moons[$id]["v"]["x"] += ($moons[$id]["x"] > $moons[$nid]["x"]) ? -1 : 1;
-                $moons[$nid]["v"]["x"] += ($moons[$nid]["x"] > $moons[$id]["x"]) ? -1 : 1;
-            }
-            if ($moons[$nid]["y"] != $moons[$id]["y"]) {
-                $moons[$id]["v"]["y"] += ($moons[$id]["y"] > $moons[$nid]["y"]) ? -1 : 1;
-                $moons[$nid]["v"]["y"] += ($moons[$nid]["y"] > $moons[$id]["y"]) ? -1 : 1;
-            }
-            if ($moons[$nid]["z"] != $moons[$id]["z"]) {
-                $moons[$id]["v"]["z"] += ($moons[$id]["z"] > $moons[$nid]["z"]) ? -1 : 1;
-                $moons[$nid]["v"]["z"] += ($moons[$nid]["z"] > $moons[$id]["z"]) ? -1 : 1;
+        for ($nid = $id + 1; $nid < $moonCount; $nid++) {
+            if ($moons[$nid][$axis] != $moons[$id][$axis]) {
+                $moons[$id]["v"][$axis] += ($moons[$id][$axis] > $moons[$nid][$axis]) ? -1 : 1;
+                $moons[$nid]["v"][$axis] += ($moons[$nid][$axis] > $moons[$id][$axis]) ? -1 : 1;
             }
         }
-
-        //update position
-        $moons[$id]["x"] += $moons[$id]["v"]["x"];
-        $moons[$id]["y"] += $moons[$id]["v"]["y"];
-        $moons[$id]["z"] += $moons[$id]["v"]["z"];
-
-        $allZero = $allZero && $moons[$id]["v"]["x"] === 0 && $moons[$id]["v"]["y"] === 0 && $moons[$id]["v"]["z"] === 0;
-    }
-    $i++;
-    if ($allZero) {
-        p($moons, $i);
-        $hashBase = "";
-        foreach ($moons as $moon) {
-            $hashBase .= "{$moon['x']},{$moon['y']},{$moon['z']},";
-        }
-
-        if ($firstHash === $hashBase) {
-            echo "BREAK AT $i\n";
-            break;
-        }
+        $moons[$id][$axis] += $moons[$id]["v"][$axis];
     }
 
-
+    return true;
 }
 
-echo "Part 1: " .energy($moons) . "\n";
+function energyAt($moons, $steps) {
+    $moonCount = count($moons);
+    for ($i = 0; $i < 1000; $i++) {
+        tick($moons, "x");
+        tick($moons, "y");
+        tick($moons, "z");
+    }
 
-function energy($moons) {
-    $energies = [];
+    $energy = 0;
     foreach ($moons as $m) {
         $pot = abs($m["x"]) + abs($m["y"]) + abs($m["z"]);
         $kin = abs($m["v"]["x"]) + abs($m["v"]["y"]) + abs($m["v"]["z"]);
-        $energies[] = $pot * $kin;
-        #var_Dump($pot, $kin);
+        $energy += $pot * $kin;
     }
-    return array_sum($energies);
+    return $energy;
 }
+
+function repeatsAt($moons, $axes) {
+    $cycleCounts = [];
+    foreach ($axes as $axis) {
+        $beginState = stringify($moons, $axis);
+
+        $cycleCounts[$axis] = 1;
+        while (tick($moons, $axis) && stringify($moons, $axis) != $beginState) {
+            $cycleCounts[$axis]++;
+        }
+    }
+
+    return lcm($cycleCounts);
+}
+
+function stringify($moons, $axis) {
+    return implode(
+        ",",
+        array_merge(
+            array_column($moons, $axis),
+            array_column(array_column($moons, "v"), $axis)
+        )
+    );
+}
+
+function lcm(array $args) {
+    foreach ($args as $arg) {
+        if ($arg == 0) {
+            return 0;
+        }
+    }
+    if (count($args) == 2) {
+        $m = array_shift($args);
+        $n = array_shift($args);
+        return abs(($m * $n) / gcd($m, $n));
+    }
+
+    return lcm(array_merge([array_shift($args)], [lcm($args)]));
+}
+
+function gcd($a, $b) {
+   while ($b != 0) {
+       $t = $b;
+       $b = $a % $b;
+       $a = $t;
+   }
+   return $a;
+}
+
 
 function p($moons, $steps) {
     echo $steps." steps\n";
