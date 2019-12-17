@@ -62,20 +62,7 @@ foreach ($grid as $y => $row) {
 echo "Part 1:" . array_sum($intersections) . "\n";
 
 $robot->wakeup();
-$in = [0, $]
-while (true) {
-    try {
-        $out = $robot->in(0);
-        if ($out == 10) {
 
-        } else {
-            echo "" . chr($out) . "";
-
-        }
-    } catch (End $e) {
-        die();
-    }
-}
 $dirs = [
     0 => [0,1],
     1 => [1,0],
@@ -88,60 +75,80 @@ $dir = 3;
 $path = [];
 
 $q = [
-    [$realGrid, $robotY, $robotX, $dir, $path]
+    [$visited, $robotY, $robotX, $dir, $path]
 ];
-while ($n = array_shift($q)) {
-    list($g, $y, $x, $dir, $p) = $n;
+while ($n = array_pop($q)) {
+    list($vis, $y, $x, $dir, $p) = $n;
     list($dirY, $dirX) = $dirs[$dir];
 
-    unset($g[$y . "_" . $x]);
-    $moved = false;
+    $vis[$y . "_" . $x] = true;
 
-    if (
-        isset($intersections[$y . "_" . $x]) || // at an intersection
-        !isset($g[($y+$dirY) . "_" . ($x+$dirX)]) // at starting position, or corner
-    ) {
-        for ($i = 0; $i < 3; $i++) {
-            $dir++;
-            if ($dir > 3) {
-                $dir = 0;
-            }
-            list($dirY, $dirX) = $dirs[$dir];
-            if (isset($g[($y+$dirY) . "_" . ($x+$dirX)])) {
-                if ($i == 0) { // right
-                    $p[] = "R";
-                } else if ($i == 1) { //ahead
-                    $nP = array_pop($p);
-                    $nP += 1;
-                    $p[] = $nP;
-                } else if ($i == 2) { //left
-                    $p[] = "L";
+    for ($i = 0; $i < 4; $i++) {
+        $dir++;
+        if ($dir > 3) {
+            $dir = 0;
+        }
+        list($dirY, $dirX) = $dirs[$dir];
+
+        if (
+            isset($realGrid[($y+$dirY) . "_" . ($x+$dirX)]) &&
+            (
+                !isset($vis[($y+$dirY) . "_" . ($x+$dirX)]) ||
+                isset($intersections[($y+$dirY) . "_" . ($x+$dirX)])
+            )
+        ) {
+            $tmpP = $p;
+            if ($i == 0) { // right
+                $tmpP[] = "R";
+            } else if ($i == 1) { //back, not allowed
+                #$tmpP[] = 2;
+            } else if ($i == 2) { // left
+                $tmpP[] = "L";
+            } else if ($i == 3) { // ahead
+                $nP = array_pop($tmpP);
+                if (is_numeric($nP)) {
+                    $tmpP[] = $nP + 1;
+                } else {
+                    $tmpP[] = $nP;
+                    $tmpP[] = 2;
                 }
-                $q[] = [$g, $y+$dirY, $x+$dirX, $dir, $p];
-                array_pop($p);
-                $moved = true;
             }
-        }
-    } else {
-        if (isset($g[($y+$dirY) . "_" . ($x+$dirX)])) {
-            $nP = array_pop($p);
-            if (is_numeric($nP)) {
-                $nP++;
-                $p[] = $nP;
-            } else {
-                $p[] = $nP;
-                $p[] = 1;
+            if (count($vis) == count($realGrid)) {
+                $path = implode(",", $tmpP);
+                echo "FOUND AN END \nPath: $path\n";
+                break 2;
             }
-            $q[] = [$g, $y+$dirY, $x+$dirX, $dir, $p];
-            $moved = true;
+            $q[] = [$vis, $y+$dirY, $x+$dirX, $dir, $tmpP];
+            #continue 2;
         }
     }
-    if (empty($g)) {
-        echo "FOUND AN END \nPath:$p\n";
-    }
-    if (!$moved) {
-        //dead end; been here before
-        #var_Dump($p);
-        #die();
+}
+
+
+
+$inputs = [
+    "A,B,A,B,C,A,C,A,C,B",
+    "R,12,L,8,L,4,L,4",
+    "L,8,R,6,L,6",
+    "L,8,L,4,R,12,L,6,L,4",
+    "n"
+];
+$input = 0;
+while (true) {
+    try {
+        $out = $robot->in($input);
+        if ($out == 10 && $inputLine = array_shift($inputs)) {
+            echo "\nProviding '$inputLine'\n";
+            $inputInts = array_map(function($chr) { return ord($chr); }, str_split($inputLine));
+            foreach ($inputInts as $i) {
+                $robot->in($i);
+            }
+            $robot->in(10);
+        } else {
+            echo "" . chr($out) . "";
+        }
+    } catch (End $e) {
+        echo "Part 2: " . $robot->out() . "\n";
+        die();
     }
 }

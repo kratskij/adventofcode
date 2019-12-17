@@ -44,7 +44,7 @@ class IntCodeComputer {
         return $this->_code[$this->direct($modes)] ?? 0;
     }
 
-    public function in($input) {
+    public function in($input, $loop = true) {
         while (true) {
             $fakeModes = [1];
             $code = $this->direct($fakeModes);
@@ -65,6 +65,9 @@ class IntCodeComputer {
                     break;
                 case 3:
                     $this->_code[$this->direct($modes)] = $input;
+                    if (!$loop) {
+                        return $this->_lastOutput;
+                    }
                     break;
                 case 4:
                     $this->_lastOutput = $this->indirect($modes);
