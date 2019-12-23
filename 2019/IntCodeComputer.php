@@ -1,11 +1,12 @@
 <?php
 
 class End extends Exception {}
+class Stalled extends Exception {}
 
 class IntCodeComputer {
     private $_origCode;
     private $_code;
-    private $_lastOutput;
+    protected $_lastOutput;
     private $_mode;
     private $_pointer;
     private $_relative;
@@ -44,8 +45,13 @@ class IntCodeComputer {
         return $this->_code[$this->direct($modes)] ?? 0;
     }
 
-    public function in($input, $loop = true) {
+    public function in($input, $loop = true, $mightStall = false) {
+        $c = 0;
         while (true) {
+            $c++;
+            if ($mightStall && $c == 10000) {
+                throw new Stalled('Computer is stalled');
+            }
             $fakeModes = [1];
             $code = $this->direct($fakeModes);
             $opcode = $code % 100;
