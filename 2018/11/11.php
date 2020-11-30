@@ -14,6 +14,7 @@ for ($y = 1; $y < $width; $y++) {
     for ($x = 1; $x < $width; $x++) {
         $id = $x + 10;
         $grid[$y][$x] = substr((($id * $y) + $serialNumber) * $id, -3, 1) - 5;
+        $gridXY[$x][$y] = substr((($id * $y) + $serialNumber) * $id, -3, 1) - 5;
     }
 }
 
@@ -39,6 +40,7 @@ for ($y = 1; $y < $width - 2; $y++) {
 }
 echo "Part 1: " . implode(",", $topPos) . "\n";
 
+
 $maxSum = -INF;
 $topPos = false;
 for ($y = 1; $y < $width; $y++) {
@@ -46,13 +48,15 @@ for ($y = 1; $y < $width; $y++) {
     for ($x = 1; $x < $width; $x++) {
         $sum = $grid[$y][$x];
         for ($size = 1; $size < $width-max($x, $y); $size++) {
+            if ($size > 15) {
+                break;
+            }
             for ($yAdd = 0; $yAdd <= $size; $yAdd++) {
                 $sum += $grid[$y + $yAdd][$x + $size];
             }
             for ($xAdd = 0; $xAdd < $size; $xAdd++) {
                 $sum += $grid[$y + $size][$x + $xAdd];
             }
-
             if ($sum > $maxSum) {
                 $topPos = [$x, $y, $size+1];
                 $maxSum = $sum;

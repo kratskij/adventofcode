@@ -13,6 +13,7 @@ $ir = new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file);
 $code = $ir->trim(true)->explode(",");
 
 $r = (new Robot($code, true))
+#$r->cli();
 ->read()
 ->south()
 ->take("hologram")

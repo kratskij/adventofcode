@@ -13,11 +13,7 @@ $uniqChars = array_unique(str_split(strtolower($input)));
 $p1 = strlen(polymer($input, $uniqChars));
 $p2 = min(array_map(
     function($char) use ($input, $uniqChars) {
-        $x = str_replace($char, "", $input);
-        $x = str_replace(strtoupper($char), "", $x);
-
-        #echo $input."\n";
-        return strlen(polymer($x, $uniqChars));
+        return strlen(polymer(str_ireplace($char, "", $input), $uniqChars));
     },
     $uniqChars
 ));

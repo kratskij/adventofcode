@@ -7,20 +7,21 @@ class ArcadeCabinet extends IntCodeComputer {
     private $_grid = [];
     private $_xCoord;
     private $_yCoord;
-    private $_tile;
-    private $_outOrder = [];
-    private $_first;
-    private $_joyStick;
 
     private $_paddleX;
     private $_paddleY;
     private $_ballX;
     private $_ballY;
     private $_ballDir = 0;
+    private $_highScore = 0;
 
     private $_blocks = [];
 
-    private $_depth = 0;
+    const BLOCK = "▒▒";
+    const WALL = "▉▉";
+    const EMPTY = "  ";
+    const BALL = "◖◗";
+    const PADDLE = "▬▬";
 
     const JOYSTICK_NEUTRAL = 0;
     const JOYSTICK_RIGHT = 1;
@@ -32,7 +33,7 @@ class ArcadeCabinet extends IntCodeComputer {
                 $this->in(0);
             }
         } catch (End $e) {
-            #echo "Part 1: " . strlen($p1) . "\n";
+            return;
         }
     }
 
@@ -44,12 +45,24 @@ class ArcadeCabinet extends IntCodeComputer {
         $this->_code[0] = 2; // gain creditz!
     }
 
-    public function play($in) {
-        #while (true) {
-            $this->in($in);
-            $this->_depth++;
-            echo "{$this->_depth}, {$this->_yCoord}, {$this->_xCoord}, {$this->_lastOutout}, {$this->countBlocks()}\n";
-        #}
+    public function getHighScore() {
+        return $this->_highScore;
+    }
+
+    public function autoPlay($animate = false) {
+        try {
+            while (true) {
+                $in = $this->optimizePaddle();
+                $this->in($in);
+                if ($animate) {
+                    system("clear");
+                    $this->printGrid();
+                    usleep(10000);
+                }
+            }
+        } catch (End $e) {
+            return;
+        }
     }
 
     public function printGrid() {
@@ -66,11 +79,11 @@ class ArcadeCabinet extends IntCodeComputer {
         for ($y = $minY; $y <= $maxY; $y++) {
             for ($x = $minX; $x <= $maxX; $x++) {
                 if ($x == $this->_ballX && $y == $this->_ballY) {
-                    $out .= "o";
+                    $out .= self::BALL;
                 } else if ($x == $this->_paddleX && $y == $this->_paddleY) {
-                    $out .= "_";
+                    $out .= self::PADDLE;
                 } else {
-                    $out .= (isset($this->_grid[$y]) && isset($this->_grid[$y][$x])) ? $this->_grid[$y][$x] : " ";
+                    $out .= (isset($this->_grid[$y]) && isset($this->_grid[$y][$x])) ? $this->_grid[$y][$x] : self::EMPTY;
                 }
             }
             $out .= "\n";
@@ -79,29 +92,13 @@ class ArcadeCabinet extends IntCodeComputer {
         echo $out;
     }
 
-    public function reset() {
-        $this->_grid = [];
-        $this->_dir = 0;
-        $this->_xCoord = 0;
-        $this->_yCoord = 0;
-        $this->_first = true;
-        $this->_outOrder = [];
-        $this->_joyStick = 0;
-
-        parent::reset();
-    }
-
-    public function getTiles() {
-        #foreach ($gen)
-    }
-
     public function optimizePaddle() {
         if ($this->_paddleX > $this->_ballX + $this->_ballDir) {
-            return -1;
+            return self::JOYSTICK_LEFT;
         } else if ($this->_paddleX + 1 < $this->_ballX + $this->_ballDir) {
-            return 1;
+            return self::JOYSTICK_RIGHT;
         }
-        return 0;
+        return self::JOYSTICK_NEUTRAL;
     }
 
     public function in($input) {
@@ -110,12 +107,12 @@ class ArcadeCabinet extends IntCodeComputer {
         $this->_lastOutout = parent::in($input);
 
         if ($this->_xCoord == -1 && $this->_yCoord == 0) {
-            echo "SEGMENT: {$this->_lastOutout}\n";
+            $this->_highScore = $this->_lastOutout;
         } else if ($this->_lastOutout == 2) {
-            $this->_grid[$this->_yCoord][$this->_xCoord] = "#";
+            $this->_grid[$this->_yCoord][$this->_xCoord] = self::BLOCK;
             $this->_blocks[$this->_yCoord . "_" . $this->_xCoord] = true;
         } else if ($this->_lastOutout == 1) {
-            $this->_grid[$this->_yCoord][$this->_xCoord] = "▉";
+            $this->_grid[$this->_yCoord][$this->_xCoord] = self::WALL;
         } else {
             if (isset($this->_blocks[$this->_yCoord . "_" . $this->_xCoord])) {
                 unset($this->_blocks[$this->_yCoord . "_" . $this->_xCoord]);

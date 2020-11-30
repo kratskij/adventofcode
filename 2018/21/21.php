@@ -72,45 +72,51 @@ foreach ($lines as $k => $line) {
     $lines[$k] = ["opcode" => $opcode, "a" => (int)$a, "b" => (int)$b, "c" => (int)$c];
 }
 
-$registers = [0,0,0,0,0,0];
-
-$ip = 0;
-while (isset($lines[$ip])) {
-    $registers[$ipReg] = $ip;
-    $registers[$lines[$ip]["c"]] = $instructions[$lines[$ip]["opcode"]]($registers, $lines[$ip]["a"], $lines[$ip]["b"]);
-    $ip = $registers[$ipReg] + 1;
+$i = 0;
+while (true) {
+    $registers = [$i,0,0,0,0,0];
+    $hashes = [];
+    $ip = 0;
+    while (isset($lines[$ip])) {
+        $hash = md5($ip . "," . implode(",", $registers));
+        if (isset($hashes[$hash])) {
+            echo "hallo";
+            break;
+        } else {
+            echo "\r\033[K  [" . implode(",", $registers) . "]";
+        }
+        $hashes[$hash] = true;
+        $registers[$ipReg] = $ip;
+        $registers[$lines[$ip]["c"]] = $instructions[$lines[$ip]["opcode"]]($registers, $lines[$ip]["a"], $lines[$ip]["b"]);
+        $ip = $registers[$ipReg] + 1;
+        echo "\n$ip [" . implode(",", $registers) . "]\n";
+    }
+    echo "\r$i";
+    $i++;
 }
+
 echo "   [" . implode(",", $registers) . "]\n";
 
 echo "Part 1: " . $registers[0]."\n";
 
 $registers = [1,0,0,0,0,0];
 $ip = 0;
-$hei = 0;
-while (isset($lines[$ip])) {
-    echo "$ip ... [" . implode(",", $registers) . "]\n";
-    if ($ip == 11) {
-        $registers[5] = $registers[2];
-        $ip = 3;
-        $hei++;
-    } else if ($ip == 15) {
-        $registers[4] = $registers[2];
-        if ($hei === 2) {
-            die();
-        }
-        $ip = 3;
-        $hei++;
-    } else {
-        $registers[$ipReg] = $ip;
-        $registers[$lines[$ip]["c"]] = $instructions[$lines[$ip]["opcode"]]($registers, $lines[$ip]["a"], $lines[$ip]["b"]);
-        $ip = $registers[$ipReg] + 1;
-    }
 
-/*
+$convertion = [
+    "instructions" => [10, 11, 3, 4, 5, 6, 8, 9],
+    "convertTo" => ["opcode" => "addi", "a" => 5, "b" => 100357, "c" => 5],
+    "revert" => ["opcode" => "addi", "a" => 5, "b" => -100357, "c" => 5],
+    "compareRegisters" => array_diff([0,1,2,3,4], [$ipReg]),
+];
+$lastInstructions = [];
+
+while (isset($lines[$ip])) {
+    $registers[$ipReg] = $ip;
+    $registers[$lines[$ip]["c"]] = $instructions[$lines[$ip]["opcode"]]($registers, $lines[$ip]["a"], $lines[$ip]["b"]);
+
     if (count($lastInstructions) == count($convertion["instructions"])) {
         array_shift($lastInstructions);
     }
-
     $lastInstructions[] = $ip;
 
     echo "just ran $ip:   (" . $lines[$ip]["opcode"] . " " . $lines[$ip]["a"] . ", " . $lines[$ip]["b"]. ", " . $lines[$ip]["c"] . ")    [" . implode(",", $registers) . "]\n";
@@ -141,7 +147,8 @@ while (isset($lines[$ip])) {
             //we passed one skip
             $registers = $regCopy;
         }
-    }*/
+    }
+    $ip = $registers[$ipReg] + 1;
 }
 echo "   [" . implode(",", $registers) . "]\n";
 

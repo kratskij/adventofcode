@@ -76,8 +76,10 @@ foreach ($keys as $ky => $row) {
                     $grid[$nY][$nX] != WALL
                 ) {
                     $nV[$nY][$nX] = true;
-                    if ($grid[$nY][$nX] == KEY || $grid[$nY][$nX] == ENTRANCE) {
-                        $paths[$ky][$kx][$nY][$nX][] = [$c, $nU];
+                    if ($grid[$nY][$nX] == KEY) {
+                        $paths["$ky.$kx"][$c]["$nY.$nX"] = $nU;
+                        krsort($paths["$ky.$kx"]);
+
                         #$nV = [$nY => [$nX => true]];
                         #$nV = $nU;
                     } else if ($grid[$nY][$nX] == DOOR) {
@@ -94,38 +96,42 @@ foreach ($keys as $ky => $row) {
 $res = ["$y.$x" => 0];
 var_Dump("countpath", count($paths));
 
-$i = 0;
-foreach ($paths as $p) {
-    foreach ($p as $r) {
-        foreach ($r as $q) {
-            $i += count($q);
-        }
-    }
-}
-echo "Found $i paths\n";
+#echo "Found $i paths\n";
 
 echo shortest($paths, $y, $x, $res, $keyCount + 1);
 die();
 
 function shortest(&$paths, $y, $x, $res, $keyCount, &$min = PHP_INT_MAX, $c = 0) {
 
+/*
     static $cs;
     if ($cs === null) {
         $cs = [];
     }
-    $cs[$c]++;
-    if ($c == 18) {
+    @$cs[$c]++;
+    if ($c == 12) {
         var_Dump($cs);
     }
+    static $bests;
+    if ($bests === null) {
+        $bests = [];
+    }
+    if (!isset($bests[$c + 1])) {
+        $bests[$c + 1] = PHP_INT_MAX;
+    }
+*/
+
     $endPaths = [PHP_INT_MAX];
-    foreach ($paths[$y][$x] as $ty => $r) {
-        foreach ($r as $tx => $path) {
-            foreach ($path as $info) {
-                $idx = "$ty.$tx";
+    foreach ($paths["$y.$x"] as $d => $infos) {
+        foreach ($infos as $idx => $required) {
+            list($ty,$tx) = explode(".", $idx);
+        #foreach ($r as $tx => $info) {
+            #foreach ($path as $info) {
+                #$idx = "$ty.$tx";
                 if (isset($res[$idx])) {
                     continue;
                 }
-                list($d, $required) = $info;
+                #list($d, $required) = $info;
 
                 foreach ($required as $ry => $row) {
                     foreach ($row as $rx => $none) {
@@ -138,7 +144,15 @@ function shortest(&$paths, $y, $x, $res, $keyCount, &$min = PHP_INT_MAX, $c = 0)
                 $tmpRes[$idx] = $d;
 
                 $sum = array_sum($tmpRes);
+
+                #$bests[$c + 1] = min($sum, $bests[$c + 1]);
+
+                #if ($sum > $bests[$c + 1] * 1.01) {
+                    #echo "skipping at " . ($c+1) . " because $sum is bigger than {$bests[$c+1]} * 1.1\n";
+                    #continue;
+                #}
                 if ($sum >= $min) {
+                    #echo "sum is too high ($sum)\n";
                     continue;
                 }
                 if (count($tmpRes) == $keyCount) {
@@ -151,106 +165,27 @@ function shortest(&$paths, $y, $x, $res, $keyCount, &$min = PHP_INT_MAX, $c = 0)
                     return $min;
                 }
                 $endPaths[] = shortest($paths, $ty, $tx, $tmpRes, $keyCount, $min, $c+1);
-            }
+            #}
         }
     }
     return min($endPaths);
 }
 die();
 
-$dir = 0;
+function shuffle_assoc(&$array) {
+     $keys = array_keys($array);
 
+     shuffle($keys);
+     shuffle($keys);
 
-$unlockCount = 0;
-foreach ($keys as $d) { $unlockCount += count($d); }
-echo "looking for $unlockCount keys\n";
-$q = [
-    [$y, $x, [], [], 0, 0, ["0_0" => true] ]
-];
+     foreach($keys as $key) {
+         $new[$key] = $array[$key];
+     }
 
-$c = 0;
-while ($n = array_shift($q)) {
-    list($y, $x, $myKeys, $unlocked, $steps, $dir, $vis) = $n;
+     $array = $new;
 
-    for ($i = 0; $i < 4; $i++) {
-        if ($dir == 3) {
-            $dir = 0;
-        } else {
-            $dir++;
-        }
-        list($dirY, $dirX) = $dirs[$dir];
-        if (
-            isset($grid[$y+$dirY]) &&
-            isset($grid[$y+$dirY][$x+$dirX])
-            && $grid[$y+$dirY][$x+$dirX] != WALL
-        ) {
-            $tmpVis = $vis;
-            if (!isset($tmpVis[($y+$dirY) . "_" . ($x+$dirX)])) {
-                printGrid($grid, $y+$dirY, $x+$dirX, $tmpVis);
-            }
-            $tmpVis[($y+$dirY) . "_" . ($x+$dirX)] = true;
-
-            $type = $grid[$y+$dirY][$x+$dirX];
-            switch ($type) {
-                case WALL;
-                    break;
-                case OPEN:
-                case ENTRANCE:
-                case DOOR;
-                    $q[] = [$y+$dirY, $x+$dirX, $myKeys, $unlocked, $steps + 1, $dir, $tmpVis];
-                    break;
-                case KEY:
-                    $tmpMyKeys = $myKeys;
-                    #if (
-                        #isset($doorKeys[$keys[$y+$dirY][$x+$dirX]]) &&
-                    #    !isset($unlocked[$keys[$y+$dirY][$x+$dirX]])) {
-                        $tmpMyKeys[$keys[$y+$dirY][$x+$dirX]] = true;
-                    #}
-                    echo count($tmpMyKeys) . "::" . $unlockCount."\n";
-                    if (count($tmpMyKeys) == $unlockCount) {
-                        echo "FOUND IT! after " . ($steps + 1) . " steps\n";
-                        die();
-                    }
-                    $q[] = [$y+$dirY, $x+$dirX, $tmpMyKeys, $unlocked, $steps + 1, $dir, $tmpVis];
-                    break;
-                case DOOR:
-                    $tmpUnlocked = $unlocked;
-                    $tmpMyKeys = $myKeys;
-                    if (isset($tmpMyKeys[$doors[$y+$dirY][$x+$dirX]])) {
-                        echo "hei\n";
-                        $tmpUnlocked[$doors[$y+$dirY][$x+$dirX]] = true;
-                        unset($tmpMyKeys[$doors[$y+$dirY][$x+$dirX]]);
-                    }
-                    var_Dump("---", $tmpUnlocked, $tmpMyKeys, $doors[$y+$dirY][$x+$dirX]);
-                    $q[] = [$y+$dirY, $x+$dirX, $tmpMyKeys, $tmpUnlocked, $steps + 1, $dir, $tmpVis];
-                    break;
-            }
-        }
-    }
-    #printGrid($grid, $y, $x);
-    #usleep(100000);
-    if (!isset($max) || count($myKeys) > $max) {
-        $max = count($myKeys);
-        echo "new max: $max\n";
-
-    }
-
-
-
-    //lets rearrange the queue
-    #if ((++$c % 1000) == 0) {
-        usort($q, function($a, $b) {
-            #if ($a[3] == $b[3]) {
-                return count($b[6]) - count($a[6]);
-            #}
-            #return count($a[3]) - count($b[3]);
-        });
-        #$q = array_slice($q, 0, 1000);
-        array_reverse($q);
-        #echo count($q[0][6])."\n";
-        #printGrid($grid, $q[0][0], $q[0][1], $q[0][6]);
-    #}
-}
+     return true;
+ }
 
 function printGrid($grid, $ty, $tx, $vis = []) {
     foreach ($grid as $y => $row) {

@@ -114,7 +114,7 @@ while ($n = array_pop($q)) {
                 }
             }
             if (count($vis) == count($realGrid)) {
-                $path = implode(",", $tmpP);
+                $path = $tmpP;
                 echo "FOUND AN END \nPath: $path\n";
                 break 2;
             }
@@ -124,6 +124,53 @@ while ($n = array_pop($q)) {
     }
 }
 
+$candidates = [];
+$maxLen = 20 / 2; // we need to add commas, so it will be ~twice the length
+for ($i = 0; $i < count($path); $i++) {
+    for ($j = $i + 3; $j < count($path) && $j <= $i + $maxLen; $j++) {
+        $idx = implode(",", array_slice($path, $i, $j-$i));
+        if (!isset($candidates[$idx])) {
+            $candidates[$idx] = $j-$i; // longer is better
+        } else {
+            $candidates[$idx]++;
+        }
+    }
+}
+$inputs = [];
+arsort($candidates);
+var_dump(array_slice($candidates, 0, 10));
+foreach ($candidates as $a => $aCount) {
+    echo "Checking $a\n";
+    $t = str_replace($a, "¤", implode(",", $path));
+    foreach ($candidates as $b => $bCount) {
+        $t = str_replace($b, "¤", $t);
+        foreach ($candidates as $c => $cCount) {
+            $t = str_replace($c, "¤", $t);
+            if (str_replace("¤", "", str_replace(",", "", $t)) == "") {
+                $inputs = [ [], $a, $b, $c ];
+                $tmpPath = implode(",", $path);
+                while (!empty($tmpPath) && count($inputs[0]) < $maxLen) {
+                    foreach (["A" => $a, "B" => $b, "C" => $c] as $id => $subPath) {
+                        echo "checking if $subPath is in $tmpPath\n";
+                        if (substr($tmpPath, 0, strlen($subPath)) == $subPath) {
+                            $tmpPath = substr($tmpPath, strlen($subPath) + 1);
+                            $inputs[0][] = $id;
+                            break;
+                        }
+                    }
+                    echo $tmpPath."\n";
+                }
+                if (empty($tmpPath)) {
+                    $inputs[0] = implode(",", $inputs[0]);
+                    echo "DONE!";
+                    var_dump($inputs);
+                    die();
+                    break 3;
+                }
+            }
+        }
+    }
+}
 
 
 $inputs = [

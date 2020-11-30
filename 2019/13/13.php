@@ -14,24 +14,6 @@ $code = $ir->trim(true)->explode(",");
 
 $arcadeCabinet = new ArcadeCabinet($code);
 $arcadeCabinet->render();
-echo "Rendered!\n";
-$arcadeCabinet->printGrid();
-
-$arcadeCabinet->cheat();
-$gameStack = [$arcadeCabinet];
-while ($next = array_pop($gameStack)) {
-#    echo count($gameStack)."\n";
-    $i = $next->optimizePaddle();
-        #echo "HEIA$i\n";
-    $n = clone $next ;
-    try {
-        $n->play($i);
-    } catch (End $e) {
-        #echo "auda\n";
-        continue;
-    }
-    #system("clear");
-    #$n->printGrid();
-    #usleep(100000);
-    $gameStack[] = $n;
-}
+echo "Part 1: " . $arcadeCabinet->countBlocks() . "\n";
+$arcadeCabinet->autoPlay(true);
+echo "Part 2: " . $arcadeCabinet->getHighScore() . "\n";

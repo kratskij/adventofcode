@@ -9,7 +9,7 @@ require_once(__DIR__."/../inputReader.php");
 
 $ir = new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file);
 $input = explode("\n", $ir->raw());
-$animate = false;
+$animate = true;
 
 $grid = [];
 
@@ -54,6 +54,7 @@ foreach ($grid as $y => $row) {
 
 $remainingCarts = $carts;
 while (true) {
+    $seconds++;
     usort($carts, function($a, $b) {
         if ($a["y"] == $b["y"]) {
             return $a["x"] - $b["x"];
@@ -183,7 +184,14 @@ function animate($grid, $carts, $interval) {
             }
         }
         $out .= "\n";
+<<<<<<< Updated upstream
+=======
+        system("clear");
+        echo $out;
+        usleep(1000);
+>>>>>>> Stashed changes
     }
+    echo $seconds."\n";
 
     $out .= "\n$frameNum\n\n";
     system("clear");

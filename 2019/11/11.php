@@ -19,8 +19,9 @@ $paintRobot = new PaintRobot($code);
 $paintRobot->paint(PaintRobot::BLACK);
 $paintCount = $paintRobot->getPanelPaintCount();
 $paintRobot->reset();
-$paintRobot->paint(PaintRobot::WHITE);
+$paintRobot->paint(PaintRobot::WHITE, true);
+system("clear");
 $regId = $paintRobot->getRegistrationIdentifier();
-
-echo "Part 1: $paintCount\n";
-echo "Part 2: $regId\n";
+echo $regId;
+#echo "Part 1: $paintCount\n";
+#echo "Part 2: $regId\n";

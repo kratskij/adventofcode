@@ -3,7 +3,7 @@
 $test = isset($argv[1]) && $argv[1] == "test";
 $file = ($test) ? "test" : "input";
 
-require_once("../inputReader.php");
+require_once(__DIR__. DIRECTORY_SEPARATOR."../inputReader.php");
 $ir = new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file);
 $input = $ir->lines();
 
