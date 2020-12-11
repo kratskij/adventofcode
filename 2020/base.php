@@ -2,8 +2,8 @@
 
 ini_set('memory_limit','2048M');
 
-$test = isset($argv[1]) && $argv[1] == "test";
-$file = ($test) ? "test" : "input";
+$file = $argv[1] ?? "input";
+$test = $file == "test";
 
 require_once(__DIR__."/../inputReader.php");
 
@@ -14,13 +14,18 @@ $input = $ir->lines();
 #$input = $ir->csv("\t");
 #$input = $ir->explode(",");
 #$input = $ir->regex(",");
+#$grid = $ir->grid(["#" => true]);
+#foreach ($grid as $y => $row) {
+#    foreach ($row as $x => $val) {
+     #}
+#}
 
 // Cast to int
 #$input = array_map("intval", $input);
 
-$val = false;
+$p1 = $p2 = false;
 
 foreach ($input as $k => $i) {
     #list($width, $height) = $i;
 }
-echo $val;
+echo "P1: $p1\nP2: $p2\n";

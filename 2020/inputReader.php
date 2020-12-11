@@ -12,8 +12,8 @@ class InputReader {
         $fileName = array_pop($fileParts);
         if ($fileName == "dl") {
             $line = readline("Download input file? (Press enter to confirm, Ctrl+C to exit)");
-            $day = (int)array_pop($fileParts);
-            if (!self::autoDownload($day, "input", $file)) {
+            $day = end($fileParts);
+            if (!self::autoDownload($day, implode(DIRECTORY_SEPARATOR, $fileParts) . DIRECTORY_SEPARATOR . "input")) {
                 echo "Could not download input file. Aborting.\n";
             }
             exit;
@@ -42,7 +42,7 @@ class InputReader {
     public function chars() {
         return str_split($this->rawData);
     }
-    public function grid($convertables) {
+    public function grid($convertables = []) {
         $ret = [];
         foreach ($this->lines() as $y => $line) {
             foreach (str_split($line) as $x => $char) {
@@ -75,7 +75,7 @@ class InputReader {
         );
     }
 
-    private static function autoDownload($day, $file, $inspect = true) {
+    private static function autoDownload($day, $file) {
         $ch = curl_init (
             sprintf("https://adventofcode.com/%d/day/%d/input", self::$_year, (int)($day))
         );
@@ -87,23 +87,21 @@ class InputReader {
 
         if (file_exists($file)) {
             echo "File downloaded successfully\n";
-            if ($inspect) {
-                echo "--- Inspecting first lines ---\n";
-                $lines = explode("\n", file_get_contents($file));
-                $i = 0;
-                while ($i < 10 && isset($lines[$i])) {
-                    $line = $lines[$i];
-                    if (strlen($line) > 100) {
-                        echo substr($line, 0, 100) . " ... [cut due to long line]\n";
-                    } else {
-                        echo "$line\n";
-                    }
-                    $i++;
+            echo "--- Inspecting first lines ---\n";
+            $lines = explode("\n", file_get_contents($file));
+            $i = 0;
+            while ($i < 10 && isset($lines[$i])) {
+                $line = $lines[$i];
+                if (strlen($line) > 100) {
+                    echo substr($line, 0, 100) . " ... [cut due to long line]\n";
+                } else {
+                    echo "$line\n";
                 }
-                echo "---\n";
-                echo count($lines) . " lines in total\n";
-                echo "--- End of inspection ---\n";
+                $i++;
             }
+            echo "---\n";
+            echo count($lines) . " lines in total\n";
+            echo "--- End of inspection ---\n";
             return true;
         } else {
             return false;

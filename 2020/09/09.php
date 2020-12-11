@@ -1,7 +1,7 @@
 <?php
 
-$test = isset($argv[1]) && $argv[1] == "test";
-$file = ($test) ? "test" : "input";
+$file = $argv[1] ?? "input";
+$test = $file == "test";
 
 require_once(__DIR__."/../inputReader.php");
 

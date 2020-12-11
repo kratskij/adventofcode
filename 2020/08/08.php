@@ -9,44 +9,62 @@ require_once(__DIR__."/../inputReader.php");
 require_once(__DIR__."/../Program.php");
 
 $ir = (new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file))->trim(true);
-
 $input = $ir->lines();
-$program = new Program($input);
 
-$programs = [$program];
+class Accumulator extends Program {
+    private $_accumulator = 0;
 
-while ($cmd = $program->getCurrentCommand()) {
-    if ($cmd == "jmp") {
-        $clone = clone $program;
-        $clone->replaceCurrentCommand("nop");
-        $programs[] = $clone;
-    } else if ($cmd == "nop") {
-        $clone = clone $program;
-        $clone->replaceCurrentCommand("jmp");
-        $programs[] = $clone;
+    public function __construct($input) {
+        parent::__construct($input);
     }
-    $program->increase();
+
+    protected function acc($value) {
+        $this->_accumulator += $value;
+    }
+
+    public function reset() {
+        parent::reset();
+        $this->_accumulator = 0;
+    }
+
+    public function accumulator() {
+        return $this->_accumulator;
+    }
+
+    public function run() {
+        parent::run();
+        return $this->_accumulator;
+    }
 }
 
 Program::$debug = false;
 
+$program = new Accumulator($input);
 $p1 = $p2 = false;
-foreach ($programs as $program) {
-    $program->run();
 
-    switch ($program->exitCode()) {
-        case Program::CODE_LOOP:
-            if (!$p1) {
-                $p1 = $program->accumulator();
-            }
-            continue 2;
-        case Program::CODE_NOT_FOUND:
-            $p2 = $program->accumulator();
-            break 2;
-        default:
-            echo "Unknown exit code: " . $program->exitCode();
-            exit;
+$program->run();
+if ($program->exitCode() == Program::CODE_LOOP) {
+    $p1 = $program->accumulator();
+} else {
+    echo "Exit code " . $program->exitCode() . "\n";
+}
+$program->reset();
+
+
+foreach ($input as $lineNumber => $instruction) {
+    $cmd = explode(" ", $instruction)[0];
+    if ($cmd == "jmp" || $cmd == "nop") {
+        $convertTo = ($cmd == "jmp") ? "nop" : "jmp";
+        $instructions = $input;
+        $instructions[$lineNumber] = str_replace($cmd, $convertTo, $instructions[$lineNumber]);
+        $clone = new Accumulator($instructions);
+        $accumulator = $clone->run();
+        if ($clone->exitCode() == Program::CODE_NOT_FOUND) {
+            $p2 = $accumulator;
+            break;
+        }
     }
 }
+
 
 echo "P1: $p1\nP2: $p2\n";
