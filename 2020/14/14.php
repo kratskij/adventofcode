@@ -16,7 +16,6 @@ foreach ($input as $k => $line) {
         case "mask":
             $mask = 0;
             $combos = [0];
-            $maskLength = strlen($words[1]);
             foreach (str_split($words[1]) as $i => $c) {
                 $bit = pow(2, 35-$i);
                 if ($c == "X") {
