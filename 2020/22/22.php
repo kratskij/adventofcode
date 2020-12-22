@@ -8,9 +8,13 @@ const DEBUG = false;
 
 require_once(__DIR__."/../inputReader.php");
 $ir = (new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file))->trim(true);
-$decks = array_map(function($lines) {
-    return array_map("intval", array_slice(explode("\n", $lines), 1));
-}, $ir->explode("\n\n"));
+
+$decks = array_map(
+    function($lines) {
+        return array_map("intval", array_slice(explode("\n", $lines), 1));
+    },
+    $ir->explode("\n\n")
+);
 
 echo sprintf("P1: %s\nP2: %s\n", solve($decks), solve($decks, true));
 
