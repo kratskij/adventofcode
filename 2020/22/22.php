@@ -19,21 +19,20 @@ $decks = array_map(
 echo sprintf("P1: %s\nP2: %s\n", solve($decks), solve($decks, true));
 
 function solve($decks, $recurse = false) {
-    list($winner, $winnerDeck) = recursiveCombat($decks, $recurse);
-    $value = 1;
+    $winner = recursiveCombat($decks, $recurse);
     $sum = 0;
-    while($card = array_pop($winnerDeck)) {
-        $sum += $card*$value;
-        $value++;
+    foreach (array_reverse($decks[$winner]) as $i => $value) {
+        $sum += ($i + 1) * $value;
     }
 
     return $sum;
 }
 
-function recursiveCombat(array $decks, $recurse, $level = 0, $round = 1) {
+function recursiveCombat(array &$decks, $recurse, $level = 0, $round = 1) {
+    $participants = count($decks);
     $knownStates = [];
 
-    while ($decks[0] && $decks[1]) {
+    while (count(array_filter($decks)) == count($decks)) {
         $idx = implode("-", array_map(function($deck) { return implode(",", $deck); }, $decks));
 
         if (isset($knownStates[$idx])) {
@@ -48,24 +47,27 @@ function recursiveCombat(array $decks, $recurse, $level = 0, $round = 1) {
             if ($triggerSubGame &= ($cards[$id] <= count($decks[$id]))) {
                 $subDecks[$id] = array_slice($decks[$id], 0, $cards[$id]);
             }
+            if (DEBUG) {
+                echo str_repeat(" ", $level) . $round . " (" . $cards[$id] . ") " . implode(",", $decks[$id]) . "\n";
+            }
         }
-
-        echo DEBUG ?  str_repeat(" ", $level) . $round . " (" . $cards[0] . ") " . implode(",", $decks[0]) . "\n" : "";
-        echo DEBUG ?  str_repeat(" ", $level) . $round . " (" . $cards[1] . ") " . implode(",", $decks[1]) . "\n" : "";
         echo DEBUG ?  str_repeat(" ", $level) . "---\n" : "";
 
         if ($recurse && $triggerSubGame) {
-            list($winner, $winnerDeck) = recursiveCombat($subDecks, true, $level + 1);
+            $winner = recursiveCombat($subDecks, true, $level + 1);
         } else {
-            $winner = ($cards[0] > $cards[1]) ? 0 : 1;
+            $winner = array_search(max($cards), $cards);
         }
 
-        if ($winner == 1) {
-            $cards = array_reverse($cards);
+        $i = $winner;
+        while (isset($cards[$i % $participants])) {
+            $decks[$winner][] = $cards[$i % $participants];
+            unset($cards[$i%$participants]);
+            $i++;
         }
-        array_push($decks[$winner], ...$cards);
+
         $round++;
     }
 
-    return [$winner, $decks[$winner]];
+    return $winner;
 }
