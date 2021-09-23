@@ -5,7 +5,7 @@ $test = $file == "test";
 
 require_once(__DIR__."/../inputReader.php");
 
-$ir = (new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file))->trim();
+$ir = (new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file))->trim(true);
 list($fieldRanges, $myTicket, $allTickets) = $ir->explode("\n\n");
 
 $fieldRanges = explode("\n", $fieldRanges);
@@ -78,6 +78,8 @@ while ($change) {
         }
     }
 }
+
+ksort($candidates);
 
 $p2 = 1;
 foreach ($myTicket as $field => $value) {

@@ -25,7 +25,7 @@ $input = $ir->lines();
 
 $p1 = $p2 = false;
 
-foreach ($input as $k => $i) {
-    #list($width, $height) = $i;
+foreach ($input as $k => $line) {
+    #list($width, $height) = $line;
 }
 echo "P1: $p1\nP2: $p2\n";
