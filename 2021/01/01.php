@@ -7,7 +7,7 @@ $test = $file == "test";
 
 require_once(__DIR__."/../inputReader.php");
 
-$ir = (new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file))->trim();
+$ir = (new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file))->trim(true);
 $input = $ir->lines();
 
 $p1 = $p2 = 0;
