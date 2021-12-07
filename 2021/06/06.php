@@ -18,8 +18,8 @@ foreach ($input as $i) {
     $c[$i] = ($c[$i] ?? 0) + 1;
 }
 
-$stop = 256;
-for ($day = 1; $day <= $stop; $day++) {
+$day = 0;
+while(++$day <= 256) {
     $new = [];
     foreach ($c as $k => $v) {
         if ($k == 0) {
