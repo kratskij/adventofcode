@@ -41,7 +41,8 @@ foreach ($grid as $y => $row) {
                 $q[] = [$y2,$x2-1];
                 $q[] = [$y2,$x2+1];
             }
-            $basins[] = $v;
+            ksort($v);
+            $basins[md5(json_encode($v))] = $v;
         }
     }
 }
