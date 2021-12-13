@@ -12,6 +12,7 @@ $baseFile = $baseDir . $sep . "base.php";
 if (!is_dir($baseDir)) {
     mkdir($baseDir);
     $irFile = $baseDir . $sep . "inputReader.php";
+    $utilFile = $baseDir . $sep . "Util.php";
     $y = $year;
     while ($y--) {
         $prevBaseFile = $root . $sep . $y . $sep . "base.php";
@@ -19,6 +20,8 @@ if (!is_dir($baseDir)) {
             copy($prevBaseFile, $baseFile);
             $prevIrFile = $root . $sep . $y . $sep . "inputReader.php";
             copy($prevIrFile, $irFile);
+            $prevUtilFile = $root . $sep . $y . $sep . "Util.php";
+            copy($prevUtilFile, $utilFile);
             break;
         }
     }
