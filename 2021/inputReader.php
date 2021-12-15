@@ -56,6 +56,17 @@ class InputReader {
         return $ret;
     }
 
+    public function intGrid() {
+        $grid = $this->grid();
+        foreach ($grid as $y => $row) {
+            foreach ($row as $x => $val) {
+                $grid[$y][$x] = (int)$val;
+            }
+        }
+
+        return $grid;
+    }
+
     public function regex($pattern) {
         $return = [];
         foreach ($this->lines() as $line) {
