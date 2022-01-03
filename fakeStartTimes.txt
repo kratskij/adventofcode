@@ -1,0 +1,48 @@
+If you use chrome, you can use the following recipe to find the first time you opened each AoC puzzle, in order to compare yourselves with the early birds:
+1. Go to chrome://history/
+2. Enter this in the console (`f12` -> console tab):
+
+```let getItems = function() {
+    return Array.from(document
+    .querySelector('history-app').shadowRoot
+    .querySelector('#main-container iron-pages history-list').shadowRoot
+    .querySelectorAll('iron-list history-item'));
+}
+let input = document
+.querySelector('history-app').shadowRoot
+.querySelector('history-toolbar').shadowRoot
+.querySelector('cr-toolbar').shadowRoot
+.querySelector('cr-toolbar-search-field').shadowRoot
+.querySelector('input');
+
+let i = 0;
+let xH = setInterval(function() {
+    i++;
+    if (i > 25) {
+        clearInterval(xH);
+        return;
+    }
+
+    input.value = `adventofcode.com/2021/day/${i}`;
+    input.dispatchEvent(new Event('input'));
+    setTimeout(function() {
+        let startTime = Number.MAX_SAFE_INTEGER;
+        getItems().forEach(function (n) {
+            let d = n.shadowRoot.querySelector('#main-container #time-accessed');
+            if (d) {
+                d.dispatchEvent(new Event('mouseover'));
+                let t = d.getAttribute('title');
+                let dt = new Date(t);
+                if (parseInt(dt.getDate()) == i) {
+                    startTime = Math.min(startTime, Math.floor(dt.getTime()/1000));
+                }
+            }
+        });
+        let dt = new Date();
+        dt.setTime(startTime*1000);
+        console.log(`Day ${i}: ${dt.toUTCString()}`);
+    }, 500);
+}, 1000);```
+3. Copy the output to me, and I'll add you to the fake leaderboard
+
+P.S.: Sorry about the horrible javascript. I have no idea what I'm doing, and my base knowledge is from the 90s with some additional googling where required. Seems to work, though.
