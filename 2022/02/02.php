@@ -18,25 +18,25 @@ const LOSS = 0;
 const DRAW = 3;
 const WIN = 6;
 
-$himMap = [ "A" => ROCK, "B" => PAPER, "C" => SCISSOR, ];
+$opMap = [ "A" => ROCK, "B" => PAPER, "C" => SCISSOR, ];
 $meMap = [ "X" => [ROCK, LOSS], "Y" => [PAPER, DRAW], "Z" => [SCISSOR, WIN] ];
 
-$beats = [
+$wins = [
     ROCK => SCISSOR,
     SCISSOR => PAPER,
     PAPER => ROCK,
 ];
-$beaten = array_flip($beats);
+$loses = array_flip($wins);
 
 $p1 = $p2 = 0;
 foreach ($input as $k => $line) {
-    list($him, $me) = $line;
-    $him = $himMap[$him];
+    list($op, $me) = $line;
+    $op = $opMap[$op];
 
     $choice = $meMap[$me][0];
-    if ($beats[$choice] == $him) {
+    if ($wins[$choice] == $op) {
         $outcome = WIN;
-    } else if ($beaten[$choice] == $him) {
+    } else if ($loses[$choice] == $op) {
         $outcome = LOSS;
     } else {
         $outcome = DRAW;
@@ -45,11 +45,11 @@ foreach ($input as $k => $line) {
 
     $outcome = $meMap[$me][1];
     if ($outcome == LOSS) {
-        $choice = $beats[$him];
+        $choice = $wins[$op];
     } else if ($outcome == WIN) {
-        $choice = $beaten[$him];
+        $choice = $loses[$op];
     } else {
-        $choice = $him;
+        $choice = $op;
     }
     $p2 += $choice + $outcome;
 }
