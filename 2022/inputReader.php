@@ -32,7 +32,7 @@ class InputReader {
         return $this->rawData;
     }
     public function lines() {
-        return explode("\n", $this->rawData);
+        return preg_split("/\r?\n/", $this->rawData);
     }
 
     public function explode($char) {
