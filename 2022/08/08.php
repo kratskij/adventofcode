@@ -10,36 +10,34 @@ require_once(__DIR__."/../inputReader.php");
 $ir = (new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file))->trim(true);
 $grid = $ir->intGrid();
 
-$width = count($grid);
+$width = count($grid); // assumes quadratic shape
 
 $visibles = [];
 foreach ($grid as $y => $row) {
     foreach ($row as $x => $val) {
         $left = $right = $up = $down = true;
-        $minLeft = $x;
-        $minRight = $width-$x-1;
-        $minUp = $y;
-        $minDown = $width-$y-1;
+        $leftDistance = $x;
+        $rightDistance = $width-$x-1;
+        $upDistance = $y;
+        $downDistance = $width-$y-1;
         for ($i = 0; $i < $width; $i++) {
             if ($i < $x && $grid[$y][$i] >= $val) {
                 $left = false;
-                $minLeft = min($minLeft, $x-$i);
-            }
-            if ($i > $x && $grid[$y][$i] >= $val) {
+                $leftDistance = min($leftDistance, $x-$i);
+            } else if ($i > $x && $grid[$y][$i] >= $val) {
                 $right = false;
-                $minRight = min($minRight, $i-$x);
+                $rightDistance = min($rightDistance, $i-$x);
             }
             if ($i < $y && $grid[$i][$x] >= $val) {
                 $up = false;
-                $minUp = min($minUp, $y-$i);
-            }
-            if ($i > $y && $grid[$i][$x] >= $val) {
+                $upDistance = min($upDistance, $y-$i);
+            } else if ($i > $y && $grid[$i][$x] >= $val) {
                 $down = false;
-                $minDown = min($minDown, $i-$y);
+                $downDistance = min($downDistance, $i-$y);
             }
         }
         if ($left || $right || $up || $down) {
-            $visibles[$y."_".$x] = ($minLeft * $minRight * $minUp * $minDown);
+            $visibles[$y."_".$x] = ($leftDistance * $rightDistance * $upDistance * $downDistance);
         }
     }
 }
