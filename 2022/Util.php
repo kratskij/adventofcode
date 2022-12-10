@@ -15,6 +15,9 @@ class Util {
         for ($y = $minY; $y <= $maxY; $y++) {
             for ($x = $minX; $x <= $maxX; $x++) {
                 if (!isset($grid[$y][$x])) {
+                    echo "not set at $y,$x\n";
+                }
+                if (!$grid[$y][$x]) {
                     $out .= "░";
                 } else {
                     $out .= "█";
