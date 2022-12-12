@@ -38,11 +38,53 @@ foreach ($grid as $y => $row) {
         }
         if ($left || $right || $up || $down) {
             $visibles[$y."_".$x] = ($leftDistance * $rightDistance * $upDistance * $downDistance);
+            $visiblesGrid[$y][$x] = true;
         }
     }
 }
+
+#printGrid($grid, $visiblesGrid);
 
 $p1 = count($visibles);
 $p2 = max($visibles);
 
 echo "P1: $p1\nP2: $p2\n";
+
+
+function printGrid($grid, $visiblesGrid) {
+    $intMap = [
+        0 => " ",
+        1 => "_",
+        2 => "▁",
+        3 => "▂",
+        4 => "▃",
+        5 => "▄",
+        6 => "▅",
+        7 => "▆",
+        8 => "▇",
+        9 => "█",
+    ];
+
+    $minY = $minX = PHP_INT_MAX;
+    $maxY = $maxX = -PHP_INT_MAX;
+    foreach ($grid as $y => $row) {
+        $minY = min($minY, $y);
+        $maxY = max($maxY, $y);
+        $minX = min($minX, min(array_keys($row)));
+        $maxX = max($maxX, max(array_keys($row)));
+    }
+
+    $out = "";
+    for ($y = $minY; $y <= $maxY; $y++) {
+        for ($x = $minX; $x <= $maxX; $x++) {
+            $out .= colorize($intMap[$grid[$y][$x]], (isset($visiblesGrid[$y][$x])) ? 37 : 90);
+        }
+        $out .= "\n";
+    }
+
+    echo "$out\n";
+}
+
+function colorize($string, $color) {
+    return sprintf("\033[%sm%s\033[0m", $color, $string);
+}
