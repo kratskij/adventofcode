@@ -16,30 +16,23 @@ $dividerPackets = [
 
 $p1 = 0;
 $packets = [];
-for ($k = 1; $input; $k++) {
-    $packets[$k*2-1] = json_decode(array_shift($input));
-    $packets[$k*2] = json_decode(array_shift($input));
-    $p1 += $k * cmp($packets[$k*2-1], $packets[$k*2]);
+for ($k = 0; $input; $k++) {
+    $packets[] = json_decode(array_shift($input));
+    $packets[] = json_decode(array_shift($input));
+    $p1 += ($k+1) * cmp($packets[$k*2], $packets[$k*2+1]);
 
     if ($input) {
         array_shift($input);
     }
 }
 
-foreach ($dividerPackets as $p) {
-    $packets[] = json_decode($p);
-}
-
+$packets = array_merge($packets, array_map("json_decode", $dividerPackets));
 usort($packets, "cmp");
-$packets = array_reverse($packets);
-array_unshift($packets, ""); // make the actual packets start at key 1
 
-$p2 = array_product(array_keys(array_filter(
-    $packets,
-    function($p) use ($dividerPackets) {
-        return in_array(json_encode($p), $dividerPackets);
-    }
-)));
+$p2 = 1;
+foreach (array_reverse($packets) as $k => $v) {
+    $p2 *= (in_array(json_encode($v), $dividerPackets)) ? $k+1 : 1;
+}
 
 echo "P1: $p1\nP2: $p2\n";
 
