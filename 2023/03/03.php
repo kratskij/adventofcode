@@ -22,14 +22,17 @@ for ($y = 0; $y < count($grid); $y++) {
         if ($num) {
             foreach ($allDirs as $dirs) {
                 [$yd, $xd] = $dirs;
-                for ($xd2 = 0; $xd2 < strlen($num); $xd2++) {
-                    if (isSymbol($grid[$y+$yd][$x+$xd+$xd2] ?? null)) {
-                        $hasNeighbour = true;
+                if ($rev == 0) {
+                    for ($xd2 = 0; $xd2 < strlen($num); $xd2++) {
+                        if (isSymbol($grid[$y+$yd][$x+$xd+$xd2] ?? null)) {
+                            $hasNeighbour = true;
+                            break;
+                        }
                     }
                 }
 
                 if (($grid[$y+$yd][$x+$xd] ?? null) == "*") {
-                    $gearNeighbours[$y+$yd][$x+$xd][$y."_".($x-$rev)] = $num;
+                    $gearNeighbours[$y+$yd][$x+$xd][$y."_".($x-$rev-1)] = $num;
                 }
             }
         }
@@ -63,6 +66,7 @@ function getNumberAt($grid, $y, $x, &$rev) {
     }
     if (!is_numeric($grid[$y][$x])) {
         $x++;
+        $rev--;
     }
     $num = "";
     while (is_numeric($grid[$y][$x] ?? null)) {
