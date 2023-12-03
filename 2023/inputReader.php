@@ -71,7 +71,13 @@ class InputReader {
         $return = [];
         foreach ($this->lines() as $line) {
             preg_match("/$pattern/i", $line, $matches);
+
             array_shift($matches);
+
+            if (empty($matches)) {
+                echo "WARN: Unmatched row: $line\n";
+            }
+
             $return[] = $matches;
         }
         return $return;
