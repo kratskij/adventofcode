@@ -16,6 +16,7 @@ $input = $ir->lines();
 #$input = $ir->csv("\t");
 #$input = $ir->explode(",");
 #$input = $ir->regex(",");
+#$input = $ir->extractNumbers();
 
 // Cast to int
 #$input = array_map("intval", $input);

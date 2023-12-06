@@ -55,6 +55,15 @@ class InputReader {
         }
         return $ret;
     }
+    public function extractNumbers() {
+        $ret = [];
+        foreach ($this->lines() as $line) {
+            preg_match_all("/\d+/", $line, $matches);
+            $ret[] = $matches[0];
+        }
+
+        return $ret;
+    }
 
     public function intGrid() {
         $grid = $this->grid();
