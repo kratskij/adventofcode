@@ -55,11 +55,11 @@ class InputReader {
         }
         return $ret;
     }
-    public function extractNumbers() {
+    public function extractNumbers($includeNegatives = false) {
         $ret = [];
         foreach ($this->lines() as $line) {
-            preg_match_all("/\d+/", $line, $matches);
-            $ret[] = $matches[0];
+            preg_match_all("/" . ($includeNegatives ? "\-?" : "") . "\d+/", $line, $matches);
+            $ret[] = array_map("intval", $matches[0]);
         }
 
         return $ret;
