@@ -1,0 +1,146 @@
+<?php
+
+class InputReader {
+
+    private static $_cookie = "session=<YOUR_SESSION_ID>";
+    private static $_year = 2020;
+
+    private $rawData;
+
+    public function __construct($file) {
+        $fileParts = explode(DIRECTORY_SEPARATOR, $file);
+        $fileName = array_pop($fileParts);
+        if ($fileName == "dl") {
+            $line = readline("Download input file? (Press enter to confirm, Ctrl+C to exit)");
+            $day = end($fileParts);
+            if (!self::autoDownload($day, implode(DIRECTORY_SEPARATOR, $fileParts) . DIRECTORY_SEPARATOR . "input")) {
+                echo "Could not download input file. Aborting.\n";
+            }
+            exit;
+        }
+        $this->rawData = file_get_contents($file);
+    }
+    public function trim($areYouSure = false) {
+        $this->rawData = trim($this->rawData);
+        if (!$areYouSure) {
+            echo "REMINDER: Trimming input data.\n";
+        }
+        return $this;
+    }
+
+    public function raw() {
+        return $this->rawData;
+    }
+    public function lines() {
+        return preg_split("/\r?\n/", $this->rawData);
+    }
+
+    public function explode($char) {
+        return explode($char, $this->rawData);
+    }
+
+    public function chars() {
+        return mb_str_split($this->rawData);
+    }
+    public function grid($convertables = []) {
+        $grid = [];
+        foreach ($this->lines() as $y => $line) {
+            foreach (mb_str_split($line) as $x => $char) {
+                if (isset($convertables[$char])) {
+                    $grid[$y][$x] = $convertables[$char];
+                } else {
+                    $grid[$y][$x] = $char;
+                }
+            }
+        }
+        if (count(array_unique(array_map("count", $grid))) > 1) {
+            echo "WARN: Grid is not rectangular; right-padding with space characters ...";
+            $w = max(array_map("count", $grid));
+            foreach ($grid as $y => $row) {
+                while (count($grid[$y]) < $w) {
+                    $grid[$y][] = " ";
+                }
+            }
+            echo "done\n";
+        }
+        return $grid;
+    }
+    public function extractNumbers($includeNegatives = false) {
+        $ret = [];
+        foreach ($this->lines() as $line) {
+            preg_match_all("/" . ($includeNegatives ? "\-?" : "") . "\d+/", $line, $matches);
+            $ret[] = array_map("intval", $matches[0]);
+        }
+
+        return $ret;
+    }
+
+    public function intGrid() {
+        $grid = $this->grid();
+        foreach ($grid as $y => $row) {
+            foreach ($row as $x => $val) {
+                $grid[$y][$x] = (int)$val;
+            }
+        }
+
+        return $grid;
+    }
+
+    public function regex($pattern) {
+        $return = [];
+        foreach ($this->lines() as $line) {
+            preg_match("/$pattern/i", $line, $matches);
+
+            array_shift($matches);
+
+            if (empty($matches)) {
+                echo "WARN: Unmatched row: $line\n";
+            }
+
+            $return[] = $matches;
+        }
+        return $return;
+    }
+
+    public function csv($separator) {
+        return array_map(
+            function($line) use ($separator) {
+                return explode($separator, $line);
+            },
+            explode("\n", $this->rawData)
+        );
+    }
+
+    private static function autoDownload($day, $file) {
+        $ch = curl_init (
+            sprintf("https://adventofcode.com/%d/day/%d/input", self::$_year, (int)($day))
+        );
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Cookie: " . self::$_cookie));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $inputData = curl_exec($ch);
+        file_put_contents($file, $inputData);
+        curl_close($ch);
+
+        if (file_exists($file)) {
+            echo "File downloaded successfully\n";
+            echo "--- Inspecting first lines ---\n";
+            $lines = explode("\n", file_get_contents($file));
+            $i = 0;
+            while ($i < 10 && isset($lines[$i])) {
+                $line = $lines[$i];
+                if (strlen($line) > 100) {
+                    echo substr($line, 0, 100) . " ... [cut due to long line]\n";
+                } else {
+                    echo "$line\n";
+                }
+                $i++;
+            }
+            echo "---\n";
+            echo count($lines) . " lines in total\n";
+            echo "--- End of inspection ---\n";
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
