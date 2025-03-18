@@ -5,19 +5,14 @@ $test = $file == "test";
 
 require_once(__DIR__."/../inputReader.php");
 require_once(__DIR__."/../Util.php");
-$ir = (new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file))->trim(true);
 
+$ir = (new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file))->trim(true);
 $input = $ir->lines();
 
 $ans = 1;
-$ans *= findMiddle($input, "en_US");
-$ans *= findMiddle($input, "sv_SE");
-$ans *= findMiddle($input, "nl_NL");
+foreach (["en_US", "sv_SE", "nl_NL"] as $locale) {
+    $lines = $input;
 
-echo "Answer: $ans\n";
-
-function findMiddle($lines, $locale) {
-    #prepare lines
     foreach ($lines as $k => $line) {
         $lines[$k] = str_replace("'", "", $lines[$k]);
         $lines[$k] = str_replace(" ", "", $lines[$k]);
@@ -38,5 +33,7 @@ function findMiddle($lines, $locale) {
         return collator_compare($coll, $line1, $line2);
     });
 
-    return (int)trim(explode(":", $lines[(count($lines) / 2)])[1]);
+    $ans *= (int)trim(explode(":", $lines[(count($lines) / 2)])[1]);
 }
+
+echo "Answer: $ans\n";
