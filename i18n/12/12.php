@@ -4,7 +4,6 @@ $file = $argv[1] ?? "input";
 $test = $file == "test";
 
 require_once(__DIR__."/../inputReader.php");
-require_once(__DIR__."/../Util.php");
 
 $ir = (new InputReader(__DIR__ . DIRECTORY_SEPARATOR . $file))->trim(true);
 $input = $ir->lines();
@@ -18,7 +17,7 @@ foreach (["en_US", "sv_SE", "nl_NL"] as $locale) {
         $lines[$k] = str_replace(" ", "", $lines[$k]);
 
         if ($locale == "en_US" || $locale == "nl_NL") {
-            $lines[$k] = Util::removeAccents($line);
+            $lines[$k] = iconv("UTF-8", "ASCII//TRANSLIT", $lines[$k]);
         }
         if ($locale == "nl_NL") {
             preg_match("/^([a-z\s]+)(.*)\:(.*)$/", $lines[$k], $matches);
