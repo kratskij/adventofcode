@@ -20,7 +20,6 @@ foreach (["en_US", "sv_SE", "nl_NL"] as $locale) {
             case "nl_NL":
                 $lines[$k] = iconv("UTF-8", "ASCII//TRANSLIT", $lines[$k]);
                 $lines[$k] = preg_replace("/^([a-z\s]+)(.*)\:(.*)$/", '$2$1:$3', $lines[$k]);
-                var_dump($lines[$k]);
                 break;
         }
     }
