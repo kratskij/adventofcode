@@ -10,27 +10,22 @@ $input = $ir->lines();
 
 $ans = 1;
 foreach (["en_US", "sv_SE", "nl_NL"] as $locale) {
-    $lines = $input;
-
-    foreach ($lines as $k => $line) {
-        $lines[$k] = str_replace("'", "", $lines[$k]);
+    foreach ($lines = $input as $k => $line) {
         $lines[$k] = str_replace(" ", "", $lines[$k]);
 
-        if ($locale == "en_US" || $locale == "nl_NL") {
-            $lines[$k] = iconv("UTF-8", "ASCII//TRANSLIT", $lines[$k]);
-        }
-        if ($locale == "nl_NL") {
-            preg_match("/^([a-z\s]+)(.*)\:(.*)$/", $lines[$k], $matches);
-            if (isset($matches[1])) {
-                $lines[$k] = $matches[2] . $matches[1] . ":" . $matches[3];
-            }
+        switch ($locale) {
+            case "en_US":
+                $lines[$k] = iconv("UTF-8", "ASCII//TRANSLIT", $lines[$k]);
+                break;
+            case "nl_NL":
+                $lines[$k] = iconv("UTF-8", "ASCII//TRANSLIT", $lines[$k]);
+                $lines[$k] = preg_replace("/^([a-z\s]+)(.*)\:(.*)$/", '$2$1:$3', $lines[$k]);
+                var_dump($lines[$k]);
+                break;
         }
     }
 
-    $coll = collator_create($locale);
-    usort($lines, function($line1, $line2) use ($coll) {
-        return collator_compare($coll, $line1, $line2);
-    });
+    collator_sort(collator_create($locale), $lines);
 
     $ans *= (int)trim(explode(":", $lines[(count($lines) / 2)])[1]);
 }
