@@ -1,6 +1,64 @@
 <?php
 
 class Util {
+    private const JP_NUMERAL_MAPPING = [
+        '〇' => 0,
+        '零' => 0,
+        '一' => 1,
+        '壱' => 1,
+        '二' => 2,
+        '弐' => 2,
+        '三' => 3,
+        '参' => 3,
+        '四' => 4,
+        '五' => 5,
+        '六' => 6,
+        '七' => 7,
+        '八' => 8,
+        '九' => 9,
+    ];
+
+    private const JP_MYRIAD_DIVISIONS_MAPPING = [
+        '十' => 10,
+        '拾' => 10,
+        '百' => 100,
+        '千' => 1000,
+    ];
+
+    // What power of ten each myriad is
+    private const JP_MYRIAD_MAPPING = [
+        '万' => '4',
+        '萬' => '4',
+        '億' => '8',
+        '兆' => '12',
+        '京' => '16',
+        '垓' => '20',
+        '秭' => '24',
+        '穣' => '28',
+        '溝' => '32',
+        '澗' => '36',
+        '正' => '40',
+        '載' => '44',
+        '極' => '48',
+        '恒河沙' => '52',
+        '阿僧祇' => '56',
+        '那由他' => '60',
+        '不可思議' => '64',
+        '無量大数' => '68',
+    ];
+
+    private const JP_LENGTHS = [
+        "尺" => 10/33, // Shaku () = 10/33 m
+        "間" => 6*(10/33), // Ken () = 6 Shaku (尺)
+        "丈" => 10*(10/33), // Jo () = 10 Shaku (尺)
+        "町" => 360*(10/33), // Cho () = 360 Shaku (尺)
+        "里" => 12960*(10/33), // Ri () = 12960 Shaku (尺)
+        "毛" => (10/33)/10000, // Mo () = 1 Shaku (尺)
+        "厘" => (10/33)/1000, // Rin () = 1 Shaku (尺)
+        "分" => (10/33)/100, // Bu () = 1 Shaku (尺)
+        "寸" => (10/33)/10, // Sun () = 1 Shaku (尺)
+    ];
+
     public static function printGrid($grid, $minY = PHP_INT_MAX, $maxY = -PHP_INT_MAX, $minX = PHP_INT_MAX, $maxX = -PHP_INT_MAX) {
         #$minY = $minX = $min;
         #$maxY = $maxX = $max;
@@ -173,5 +231,74 @@ class Util {
         $string = strtr($string, $chars);
 
         return $string;
+    }
+
+
+    public static function convertJpNumeral(string $number): string
+    {
+        $result = '0';
+        $remainingNumber = $number;
+
+        /**
+         * @var array<non-empty-string, numeric-string> $mapping
+         */
+        $mapping = array_reduce(array_keys(self::JP_MYRIAD_MAPPING), function (array $carry, $item) {
+            $carry[$item] = bcpow('10', self::JP_MYRIAD_MAPPING[$item]);
+            return $carry;
+        }, []);
+        arsort($mapping, SORT_NATURAL);
+
+        foreach ($mapping as $key => $value) {
+            $check = explode($key, $remainingNumber);
+            if (count($check) > 2) {
+                throw new InvalidArgumentException('Invalid number format.');
+            }
+            if (count($check) === 2) {
+                $left = $check[0] === '' ? '1' : self::jpConvertDivision($check[0]);
+                $result = bcadd($result, bcmul((string)$left, $value));
+                $remainingNumber = $check[1];
+            }
+        }
+        if ($remainingNumber !== '') {
+            $result = bcadd($result, (string)self::jpConvertDivision($remainingNumber));
+        }
+        return $result;
+    }
+
+    private static function jpConvertDivision(string $number): int
+    {
+        $result = 0;
+        $remainingNumber = $number;
+
+        $mapping = self::JP_MYRIAD_DIVISIONS_MAPPING;
+        arsort($mapping);
+
+        foreach ($mapping as $key => $value) {
+            $check = explode($key, $remainingNumber);
+            if (count($check) > 2) {
+                throw new InvalidArgumentException('Invalid number format.');
+            }
+            if (count($check) === 2) {
+                $left = $check[0] === '' ? 1 : self::jpConvertNumeral($check[0]);
+                $result += $left * $value;
+                $remainingNumber = $check[1];
+            }
+        }
+        if ($remainingNumber !== '') {
+            $result += self::jpConvertNumeral($remainingNumber);
+        }
+        return $result;
+    }
+
+    private static function jpConvertNumeral(string $japaneseNumeral): int
+    {
+        if (!isset(self::JP_NUMERAL_MAPPING[$japaneseNumeral])) {
+            throw new InvalidArgumentException('Invalid numeral: ' . $japaneseNumeral);
+        }
+        return self::JP_NUMERAL_MAPPING[$japaneseNumeral];
+    }
+
+    public static function convertJpLength(string $length) {
+        return self::JP_LENGTHS[$length];
     }
 }
