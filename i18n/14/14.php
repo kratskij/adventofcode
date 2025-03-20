@@ -13,9 +13,8 @@ $ans = 0;
 foreach ($input as $k => $line) {
     $nums = [];
     foreach (explode(" × ", $line) as $jNumLen) {
-        $chars = mb_str_split($jNumLen);
-        $nums[] = Util::convertJpNumeral(implode("", array_slice($chars, 0, -1)));
-        $nums[] = Util::convertJpLength(implode("", array_slice($chars, -1)));
+        $nums[] = Util::convertJpNumeral(mb_substr($jNumLen, 0, -1));
+        $nums[] = Util::convertJpLength(mb_substr($jNumLen, -1));
     }
     $ans += array_product($nums);
 }
